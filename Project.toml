@@ -1,0 +1,13 @@
+name = "PkgSRA"
+uuid = "cd139760-d0fc-11e9-29bc-498c17ce05e4"
+authors = ["Charles Fieseler"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

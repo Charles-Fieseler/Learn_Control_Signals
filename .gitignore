@@ -10,4 +10,7 @@
 *.pdf
 *.cls
 *.sty
+*.bib
+*.gz
 /paper/figures*
+/paper/inkscape*

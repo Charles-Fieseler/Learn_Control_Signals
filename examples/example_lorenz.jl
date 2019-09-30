@@ -45,16 +45,40 @@ function solve_lorenz_system(U_func_time=U_func_time_trivial,
     return sol
 end
 
-# Helper functions and plotting
-# plot(U_func.(ts), label="Control Signal")
-# dat = Array(sol)
-# plot(sol)
-# plot3d(dat[1,:], dat[2,:], dat[3,:]); xaxis!("x"); yaxis!("y")
-# plotly()
-# plot(dat[1,:], dat[3,:])
-# title!("X-Z plane")
+#####
+##### Turing function for Bayesian parameter estimation
+#####
+function lorenz_system(u, p, t)
+    u = convert.(eltype(p),u)
 
-# True model in SINDy syntax
+    ρ, σ, β = p
+    x, y, z = u
+    du = [σ*(y-x); x*(ρ-z) - y; x*y - β*z]
+    return du
+end
+
+@model lorenz_grad_residual(y, train_ind) = begin
+    # Lorenz parameters
+    ρ ~ Normal(10, 10.0)
+    σ ~ Normal(10, 1.0)
+    β ~ Normal(5, 1.0)
+    params = [ρ, σ, β]
+    noise ~ Truncated(Normal(5, 5.0), 0, 20)
+
+    t = [0] # Not time dependent
+    for i in 1:size(y,2)
+        u = dat[:,train_ind[i]]
+        du_params = lorenz_system(u, params, t)
+        # TODO: Hard-coded noise
+        #   Note: will not converge if much lower...
+        y[:, i] ~ MvNormal(du_params, [noise, noise, noise])
+    end
+end;
+
+
+#####
+##### True model in SINDy syntax
+#####
 r, s, b = p
 #      x  y z  c xx xy xz yy yz zz
  A = [[-s s 0  0  0  0  0  0  0  0];

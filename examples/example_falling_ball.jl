@@ -4,8 +4,8 @@ using Flux
 tspan = (0.0f0, 10.0f0)
 
 """
-Simple ball in one spatial dimension, for 3 dimensions total:
-    x, v, a
+Simple ball in one spatial dimension, for 2 dimensions total:
+    v, a
 """
 function ball_system(du, u, p, t;
                      U_func_time=U_func_time_trivial,
@@ -17,6 +17,20 @@ function ball_system(du, u, p, t;
     du[1] = u[2]
     du[2] = -g
     du .+= Ft .+ Fs
+end
+
+"""
+Simple uncontrolled ball in one spatial dimension, for 2 dimensions total:
+    v, a
+Note: non-inplace version
+"""
+function ball_system(u, p, t)
+    g = p
+
+    du = zeros(eltype(p), size(u))
+    du[1] = u[2]
+    du[2] = -g
+    return du
 end
 
 """

@@ -1,7 +1,10 @@
 # Settings to be used by the scripts in the 'paper' folder
 
-FIGURE_FOLDERNAME = "C:\\Users\\charl\\Documents\\Current_work\\Learning_controllers\\PkgSRA\\paper\\figures\\"
-EXAMPLE_FOLDERNAME = "C:\\Users\\charl\\Documents\\Current_work\\Learning_controllers\\PkgSRA\\examples\\"
+BASE_FOLDERNAME = "C:\\Users\\charl\\Documents\\Current_work\\Learning_controllers\\PkgSRA\\"
+FIGURE_FOLDERNAME = BASE_FOLDERNAME*"paper\\figures\\"
+EXAMPLE_FOLDERNAME = BASE_FOLDERNAME*"examples\\"
+DAT_FOLDERNAME = BASE_FOLDERNAME*"paper\\dat\\"
+
 
 # COLOR_DICT = Dict("true"=>[0, 0, 0],
 #               "data"=>[111, 111, 111],

@@ -1,10 +1,13 @@
 using Random
+using Interpolations
 
 U_func_time_trivial(t, u) = zeros(size(u));
 U_func_space_trivial(u) = zeros(size(u));
 
+#####
+##### Spike-like controllers
+#####
 # FROM: https://discourse.julialang.org/t/diffeqflux-with-time-as-additional-input-to-neural-ode/26456/3
-# The system I'm trying to solve, with controller
 function U_func_time(t, u, U_width, U_starts;
                         F_dim=2, amplitude=1.0)
     F = zeros(size(u))
@@ -40,7 +43,42 @@ function spring_forcing_example(tspan)
 end
 
 
-# Generate the control signal as a function of coordinates
+#####
+##### Piecewise constant controllers
+#####
+
+# Returns the function with signature:
+#   f = generate_U_func_piecewise(t, u)
+#   f(t, u) # control at that time
+function generate_U_func_piecewise(tspan, u_size;
+                                    num_jumps = 10,
+                                    U_min=-1, U_max=1,
+                                    F_dim=2)
+    jump_locations = sort(rand(num_jumps) .* tspan[end])
+    jump_locations = [jump_locations; tspan[end]]
+    U_series = zeros(u_size)
+    my_rand() = (U_max-U_min)*rand() + U_min
+    let jump_ind=1, current_val=my_rand()
+        for i in 1:length(tspan)
+            if tspan[i] > jump_locations[jump_ind]
+                jump_ind += 1
+                current_val = my_rand()
+            end
+            U_series[F_dim, i] = current_val
+        end
+    end
+    # Generates a function that can be called like f(t)
+    # return U_series
+    U_func = generate_map_rows_function(
+                (x)->CubicSplineInterpolation(tspan, x), U_series)
+    return (t, tmp)->U_func(t) # Needs the right signature
+end
+
+
+
+#####
+##### Coordinate (spatial) controllers
+#####
 function U_func_hard_wall(X, x_dim=1, v_dim=2, wall_strength=100.0)
     F = zeros(size(X))
     X[x_dim]<0.0 ? F[v_dim]=wall_strength : return F
@@ -80,8 +118,12 @@ function U_func_spring_sphere(X; k=1000.0,
     return F
 end
 
-# Export
+
+#####
+##### Export
+#####
 export U_func_time, U_func_time_multivariate,
         spring_forcing_example, U_func_spring_sphere,
         U_func_hard_wall, U_func_soft_wall, U_func_spring,
-        U_func_time_trivial, U_func_space_trivial
+        U_func_time_trivial, U_func_space_trivial,
+        generate_U_func_piecewise

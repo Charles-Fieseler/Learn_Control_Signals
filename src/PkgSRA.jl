@@ -1,15 +1,11 @@
 module PkgSRA
 
     ## Base
-    using DiffEqFlux
-    using Flux
-    using OrdinaryDiffEq
+    using DiffEqFlux, OrdinaryDiffEq, Flux, Turing, Random
     ## For derivatives
-    # using DSP
-    # using Statistics
+    using DSP, Statistics
     ## General
-    using Plots
-    # using Random
+    using Plots, StatsPlots, BSON
 
     include("numerical_derivatives.jl")
     include("initialize_control_signal.jl")
@@ -18,6 +14,7 @@ module PkgSRA
     include("../utils/array_utils.jl")
     include("../utils/regression_utils.jl")
     include("../utils/control_utils.jl")
+    include("../utils/posterior_sampling_utils.jl")
     include("forcing_functions.jl")
 
 end # module

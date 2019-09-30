@@ -1,14 +1,15 @@
-using PkgSRA, Plots
+using PkgSRA, Plots, LinearAlgebra
 using BSON: @load
 pyplot()
 
 #####
 ##### Load variables
 #####
+include("paper_settings.jl")
 this_dat_name = DAT_FOLDERNAME*"dat_flowchart_inkscape_"
 
 # Original ODE and controller variables
-fname = this_dat_name*"ode_vars.bson"
+fname = this_dat_name*"ode_vars.bson";
 @load fname dat dat_grad true_grad U_true
 
 # Bayesian variables 1: before control

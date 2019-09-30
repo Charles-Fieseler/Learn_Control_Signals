@@ -57,7 +57,7 @@ function lorenz_system(u, p, t)
     return du
 end
 
-@model lorenz_grad_residual(y, train_ind) = begin
+@model lorenz_grad_residual(y, dat) = begin
     # Lorenz parameters
     ρ ~ Normal(10, 10.0)
     σ ~ Normal(10, 1.0)
@@ -67,7 +67,7 @@ end
 
     t = [0] # Not time dependent
     for i in 1:size(y,2)
-        u = dat[:,train_ind[i]]
+        u = dat[:,i]
         du_params = lorenz_system(u, params, t)
         # TODO: Hard-coded noise
         #   Note: will not converge if much lower...
@@ -94,4 +94,5 @@ core_dyn_true = sindyc_model(A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
                             ["x", "y", "z"])
 
 # Actually export
-export ts, solve_lorenz_system, lorenz_system, core_dyn_true
+export ts, solve_lorenz_system, lorenz_system, core_dyn_true,
+    lorenz_grad_residual

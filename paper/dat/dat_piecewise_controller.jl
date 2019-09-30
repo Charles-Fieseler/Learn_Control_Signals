@@ -8,7 +8,6 @@ Random.seed!(11)
 #####
 ##### Define the controlled dynamical system
 #####
-# include("../../utils/posterior_sampling_utils.jl")
 include("../scripts/paper_settings.jl")
 include(EXAMPLE_FOLDERNAME*"example_lorenz.jl")
 

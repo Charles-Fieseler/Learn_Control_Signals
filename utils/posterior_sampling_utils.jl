@@ -40,7 +40,7 @@ function sample_posterior_trajectories(chain, dat, sample_ind, vars, system_mode
     for i in 1:num_samples
         these_params = [param_samples[v].value[i] for v in vars]
         all_noise[i] = param_samples[:noise].value[i]
-        prob = ODEProblem(system_model, dat[:,start_ind], tspan, these_params)
+        prob = ODEProblem(system_model, dat[:,sample_ind[1]], tspan, these_params)
         sol = solve(prob, Tsit5(), saveat=ts);
         push!(all_vals, Array(sol))
     end
@@ -55,6 +55,13 @@ end
 """
 Generate a chain with settings that have worked well for me
     Uses NUTS sampler
+
+Input:
+    dat - Each row is a variable
+    numerical_grad - Each row is a variable
+    turing_model - a model which takes in the data and predicts the gradient
+        e.g:
+        turing_model(grad, data)
 """
 function generate_chain(dat, numerical_grad, turing_model;
                         iterations=1000,
@@ -64,7 +71,8 @@ function generate_chain(dat, numerical_grad, turing_model;
     # Try to predict the GRADIENT from data
     train_ind = start_ind:num_training_pts+start_ind-1
     y = numerical_grad[:,train_ind]
-    chain = sample(turing_model(y, train_ind),
+    x = dat[:,train_ind]
+    chain = sample(turing_model(y, x),
                     NUTS(iterations, n_adapts, 0.6j_max));
     return (chain=chain, train_ind=train_ind)
 end

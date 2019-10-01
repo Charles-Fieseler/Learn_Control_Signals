@@ -69,4 +69,17 @@ end
 sindy_predict(model::sindyc_model, coef::AbstractVector, dat::AbstractVecOrMat) =
     sindy_predict(model, sindy_coef2mat(model, coef), dat)
 
-export convert_sindy_to_turing
+#####
+##### Creating model instances from chains
+#####
+function sindy_from_chain(m0::sindyc_model, chain::MCMCChains.AbstractChains)
+    p_sample = sample(chain, 2) # sample size of 1 breaks
+    p = Array(p_sample)[1,1:end-1] # Leave out noise
+    # Assume these parameters are the A matrix
+    A = sindy_coef2mat(m0, p)
+    new_model = sindyc_model(A,
+            m0.B, m0.U, m0.U_func, m0.library, m0.variable_names)
+    return new_model
+end
+
+export convert_sindy_to_turing, sindy_from_chain

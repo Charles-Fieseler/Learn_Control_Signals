@@ -13,29 +13,20 @@ Takes in a SINDy model and returns a Turing-compatible model that defines
 Note: helpful NN analogue: https://turing.ml/dev/tutorials/3-bayesnn/
 """
 function convert_sindy_to_turing(model::sindyc_model;
-                                 priors=nothing)
-
-    # all_terms = build_term_names(model)
+                                noise_prior=Normal(5, 5.0))
     n_in, n_aug = size(model.A)
     total_terms = n_in * n_aug
-    # if priors == nothing
-    #     priors = [Normal(0, 10.0) for i in 1:n_in]
-    # end
+
+    prior_coef = sindy_mat2coef(model.A)
 
     @model turing_model(y, dat) = begin
-        # Set the priors on our SINDy coefficients.
-        # coef = Array{Real}(undef, n_in)
-        # coef ~ [Normal(0, 10)]
-        all_coef ~ MvNormal(zeros(total_terms), 10 .* ones(total_terms))
+        # Set the priors using the passed model parameters
+        all_coef ~ MvNormal(prior_coef, 1 .* ones(total_terms))
         A = sindy_coef2mat(model, all_coef)
-        noise ~ Truncated(Normal(5, 5.0), 0, 100)
-
+        noise ~ Truncated(noise_prior, 0, 100)
+        # Predict the gradient at each time step (grid collocation)
         for i in 1:size(y,2)
-            # Just uses the model library, not the parameters
-            # dat_aug = augment_data(model, dat[:,i:i])
-            # preds = A*dat_aug
             preds = sindy_predict(model, all_coef, dat[:,i])
-
             y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
         end
     end;
@@ -52,7 +43,7 @@ end
 
 function sindy_mat2coef(mat::AbstractMatrix)
     n, m = size(mat)
-    return reshape(mat, (n*m, 1))
+    return reshape(mat, (n*m))
 end
 
 #####

@@ -17,6 +17,13 @@ a list of strings and arguments via 'library', but a custom function can also be
 passed using 'custom_func'. Currently implemented library terms are:
     ["cross_terms", order::Int]
         Here, 'order' is how high of an order to do
+
+model = sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
+                library=Dict(),
+                use_lasso=false,
+                hard_threshold=nothing,
+                quantile_threshold=0.1,
+                var_names = ["x", "y", "z"])
 """
 function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 library=Dict(),
@@ -33,6 +40,9 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     end
 
     # Get a model with the augmented data
+    if length(library) == 0
+        error("Must add library terms.")
+    end
     n, m = size(X)
     library = convert_string2function(library)
     X_augmented = calc_augmented_data(X, library)
@@ -68,7 +78,6 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
             #                 select=MinCVmse(Kfold(3,2)))
         # end
     end
-
 
     if U == nothing
         model = sindyc_model(A, zeros(n,1), zeros(1, m), (t)->zeros(1),

@@ -50,7 +50,11 @@ function sparse_regression(X::Matrix, y::Matrix;
         A = zeros(size(y,1), size(X,1))
         # For the 2d predictor case, just loop over rows
         for i in 1:size(y,1)
-            global A[i, :] = sparse_regression(X, y[i:i,:],
+            # global A[i, :] = sparse_regression(X, y[i:i,:],
+            #                 num_iter=num_iter,
+            #                 quantile_threshold=quantile_threshold,
+            #                 hard_threshold=hard_threshold)
+            A[i, :] = sparse_regression(X, y[i:i,:],
                             num_iter=num_iter,
                             quantile_threshold=quantile_threshold,
                             hard_threshold=hard_threshold)

@@ -127,6 +127,7 @@ function print_equations(model::sindyc_model;
         end
         println("\b\b")
     end
+    println()
 end
 
 #####

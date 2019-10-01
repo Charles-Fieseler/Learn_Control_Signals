@@ -24,7 +24,7 @@ function convert_sindy_to_turing(model::sindyc_model;
         # Set the priors using the passed model parameters
         all_coef ~ MvNormal(prior_coef, coef_noise_std .* ones(total_terms))
         A = sindy_vec2mat(model, all_coef)
-        noise ~ Truncated(noise_prior, 0, 100)
+        noise ~ Truncated(dat_noise_prior, 0, 100)
         # Predict the gradient at each time step (grid collocation)
         for i in 1:size(y,2)
             preds = sindy_predict(model, all_coef, dat[:,i])
@@ -83,8 +83,7 @@ function sindy_vec2mat(model::sindyc_model, coef::AbstractVector)
 end
 
 function sindy_mat2vec(mat::AbstractMatrix)
-    n, m = size(mat)
-    return reshape(mat, (n*m))
+    return reshape(mat, length(mat))
 end
 
 #####
@@ -104,8 +103,8 @@ sindy_predict(model::sindyc_model, coef::AbstractVector, dat::AbstractVecOrMat) 
 #####
 ##### Creating model instances from chains
 #####
-function sindy_from_chain(m0::sindyc_model, chain::MCMCChains.AbstractChains)
-    n_total = length(m0.A)
+function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.AbstractChains)
+    n_total = length(model_template.A)
 
     coef_sample = sample(chain, 2) # sample size of 1 gives error
     coef_vec = Array(coef_sample)[1,1:end-1] # Leave out noise
@@ -123,9 +122,11 @@ function sindy_from_chain(m0::sindyc_model, chain::MCMCChains.AbstractChains)
         coef_vec = coef_tmp
     end
     # Assume these parameters are the A matrix
-    A = sindy_vec2mat(m0, coef_vec)
+    A = sindy_vec2mat(model_template, coef_vec)
     new_model = sindyc_model(A,
-            m0.B, m0.U, m0.U_func, m0.library, m0.variable_names)
+            model_template.B, model_template.U,
+            model_template.U_func, model_template.library,
+            model_template.variable_names)
     return new_model
 end
 

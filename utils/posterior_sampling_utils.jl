@@ -64,6 +64,7 @@ Input:
         turing_model(grad, data)
 """
 function generate_chain(dat, numerical_grad, turing_model;
+                        opt=NUTS,
                         iterations=1000,
                         num_training_pts=500, start_ind=1)
     n_adapts = Int(iterations/5)

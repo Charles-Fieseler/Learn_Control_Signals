@@ -12,10 +12,11 @@ module PkgSRA
     include("sindyc.jl")
     include("dmdc.jl")
     include("initialize_control_signal.jl")
+    include("forcing_functions.jl")
     include("../utils/array_utils.jl")
+    include("../utils/sindy_utils.jl")
     include("../utils/regression_utils.jl")
     include("../utils/control_utils.jl")
     include("../utils/posterior_sampling_utils.jl")
-    include("forcing_functions.jl")
 
 end # module

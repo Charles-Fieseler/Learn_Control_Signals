@@ -13,7 +13,7 @@ Takes in a SINDy model and returns a Turing-compatible model that defines
 Note: helpful NN analogue: https://turing.ml/dev/tutorials/3-bayesnn/
 """
 function convert_sindy_to_turing(model::sindyc_model;
-                                noise_prior=Normal(5, 5.0),
+                                dat_noise_prior=Normal(5, 5.0),
                                 coef_noise_std=1.0)
     n_in, n_aug = size(model.A)
     total_terms = n_in * n_aug
@@ -50,11 +50,12 @@ function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
 
     @model turing_model(y, dat) = begin
         # Set the priors using the passed model parameters
-        all_coef = Array{Real}(undef, total_terms)
+        all_coef = Array{Union{Real, Distribution}}(undef, total_terms)
         for (i, coef) in enumerate(prior_coef)
             if abs(prior_coef[i]) > 0.0
                 all_coef[i] ~ Normal(prior_coef[i], coef_noise_std)
             else
+                # all_coef[i] ~ Normal(0.0, 1e-4)
                 all_coef[i] = 0.0
             end
         end
@@ -63,6 +64,7 @@ function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
         # Predict the gradient at each time step (grid collocation)
         for i in 1:size(y,2)
             preds = sindy_predict(model, all_coef, dat[:,i])
+            # TODO: does this loop actually work?
             for i_var in 1:n_in
                 y[i_var, i] ~ Normal(preds[i_var], noise)
             end
@@ -91,7 +93,7 @@ end
 function sindy_predict(model::sindyc_model, coef::AbstractMatrix,
                         dat::AbstractVecOrMat)
     dat_aug = augment_data(model, dat)
-    predictions = coef * dat_aug
+    predictions = coef * convert.(eltype(coef),dat_aug)
     return predictions
 end
 

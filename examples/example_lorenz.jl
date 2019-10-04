@@ -69,8 +69,6 @@ end
     for i in 1:size(y,2)
         u = dat[:,i]
         du_params = lorenz_system(u, params, t)
-        # TODO: Hard-coded noise
-        #   Note: will not converge if much lower...
         y[:, i] ~ MvNormal(du_params, [noise, noise, noise])
     end
 end;

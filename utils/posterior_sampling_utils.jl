@@ -73,8 +73,11 @@ function generate_chain(dat, numerical_grad, turing_model;
     train_ind = start_ind:num_training_pts+start_ind-1
     y = numerical_grad[:,train_ind]
     x = dat[:,train_ind]
+    # chain = sample(turing_model(y, x),
+    #                 NUTS(iterations, n_adapts, 0.6j_max));
+    # Turing 0.7 syntax
     chain = sample(turing_model(y, x),
-                    NUTS(iterations, n_adapts, 0.6j_max));
+                    NUTS(n_adapts, 0.6j_max), iterations);
     return (chain=chain, train_ind=train_ind)
 end
 

@@ -11,14 +11,15 @@ Random.seed!(11)
 ##### Define the controlled dynamical system
 #####
 # Load example problem
+include("../../utils/sindy_turing_utils.jl")
 include("../scripts/paper_settings.jl")
 include(EXAMPLE_FOLDERNAME*"example_lorenz.jl")
 
 # Define the multivariate forcing function
-num_ctr = 50;
+num_ctr = 100;
     U_starts = rand(3, num_ctr) .* tspan[2]
-    U_widths = [0.1, 0.1, 0.1];
-    amplitudes = [200.0, 200.0, 200.0]
+    U_widths = [0.05, 0.05, 0.05];
+    amplitudes = [50.0, 50.0, 50.0]
 my_U_func_time2(t, u) = U_func_time_multivariate(t, u,
                         U_widths, U_starts,
                         F_dim=[1, 2, 3],
@@ -30,12 +31,17 @@ my_U_func_time2(t, u) = U_func_time_multivariate(t, u,
 sol = solve_lorenz_system(my_U_func_time2)
 dat = Array(sol)
 
+# plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
+
 # Derivatives
 numerical_grad = numerical_derivative(dat, ts)
 
 true_grad = zeros(size(dat))
 for i in 1:size(dat,2)
     true_grad[:,i] = lorenz_system(true_grad[:,i], dat[:,i], p, [0])
+end
+let d = dat
+    plot(d[1,:],d[2,:],d[3,:],label="Data")
 end
 
 # True control signal
@@ -47,38 +53,84 @@ end
 #####
 ##### Calculate distribution of residuals
 #####
-# Calculate posterior distribution of parameters
-chain, train_ind = generate_chain(dat,
-                        numerical_grad, lorenz_grad_residual)
+Turing.setadbackend(:forward_diff)
+# CHEATING: known structure
+#   Calculate posterior distribution of parameters
+# chain, train_ind = generate_chain(dat,
+#                         numerical_grad, lorenz_grad_residual)
+sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
+Random.seed!(13)
+sindy_unctr =  sindyc(dat, numerical_grad,
+                        library=sindy_library, use_lasso=true)
+grad_unctr = sindy_unctr(dat)
+let d = grad_unctr, d0 = numerical_grad
+    plot(d[1,:],d[2,:],d[3,:],label="Model")
+    plot!(d0[1,:],d0[2,:],d0[3,:],label="Data")
+    title!("Gradients (L2 SINDy model)")
+end
+# WARNING: generate_chain MIGHT take a very long time!
+turing_unctr = convert_sindy_to_turing_enforce_zeros(sindy_unctr;
+                                dat_noise_prior=Normal(0.0, 1.0),
+                                coef_noise_std=0.01)
+chain = generate_chain(dat, numerical_grad, turing_unctr,
+                            iterations=10,
+                            num_training_pts=10, start_ind=101)[1]
+turing_unctr_sample = sindy_from_chain(core_dyn_true, chain)
+
 # Generate samples of the gradient time series from the posterior
-vars = [:ρ, :σ, :β]
+
+
+
+# Generate a single full sample trajectory (MAYBE FROM TURING)
+condition(u,t,integrator) = any(abs.(u).>2e2)
+cb = DiscreteCallback(condition, terminate!)
+
+# prob_unctr = ODEProblem(sindy_unctr, u0, tspan, [0], callback=cb)
+prob_unctr = ODEProblem(turing_unctr_sample, u0, tspan, [0], callback=cb)
+sol_unctr = solve(prob_unctr, Tsit5(), saveat=ts);
+dat_unctr = Array(sol_unctr)
+
+plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
+    plot!(dat_unctr[1,:],dat_unctr[2,:],dat_unctr[3,:],label="Turing model with enforced zeros")
+    title!("Integrated Turing model")
+
+# Get the full posterior distribution
+vars = chain.name_map[:parameters][1:end-1]
+# vars = [:ρ, :σ, :β]
 sample_ind = 1:length(ts)
 sample_gradients, sample_noise = sample_posterior_grad(chain,
             dat, sample_ind, vars, lorenz_system)
+let y = sample_gradients[1,:,:], y2 = sample_gradients[2,:,:], n=numerical_grad
+    plot3d(y[:,1], y[:,2], y[:,3], label="Naive Sample 1")
+    plot3d!(y2[:,1], y2[:,2], y2[:,3], label="Naive Sample 2")
+    plot3d!(n[1,:], n[2,:], n[3,:], label="Data")
+    title!("Sampled Turing Gradients")
+end
 # Generate test trajectories from the posterior
-sample_trajectories = sample_posterior_trajectories(
-                                chain, dat, sample_ind, vars, lorenz_system,
-                                tspan, ts, num_samples=5)[1]
+# sample_trajectories = sample_posterior_trajectories(
+#                                 chain, dat, sample_ind, vars, lorenz_system,
+#                                 tspan, ts, num_samples=5)[1]
 # Calculate the residuals
 sample_gradients = transpose(drop_all_1dims(mean(sample_gradients, dims=1)))
     sample_trajectory_noise = mean(sample_noise)
 
-let y = sample_trajectories[3], y2 = sample_trajectories[4]
-    plot3d(y[1,:], y[2,:], y[3,:], label="Naive Sample 2")
-    plot3d!(y2[1,:], y2[2,:], y2[3,:], label="Naive Sample 1")
-    plot3d!(dat[1,:], dat[2,:], dat[3,:], label="Data")
-end
 
 # Align the signals
 dat_grad = numerical_grad[:, sample_ind]
 
-residual = dat_grad .- sample_trajectory_mean
+residual = dat_grad .- sample_gradients
 ctr_guess = process_residual(residual, sample_trajectory_noise)
 
 # Visualization
-i = 3
+i = 1
+    plot(dat_grad[i,:], label="Data gradient")
+    plot!(sample_gradients[i,:], label="Sample gradient")
+i = 1
+    plot(residual[i,:], ribbon=sample_trajectory_noise)
+    plot!(U_true[i,:], label="True")
+    title!("Residual and true control")
+i = 1
     # ind = 1:300
-    # plot(residual[i,ind], ribbon=sample_trajectory_noise, label="Residual")
     plot(ctr_guess[i,:], label="Control guess")
     plot!(U_true[i,:], label="True", show=true)
 

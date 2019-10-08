@@ -67,12 +67,13 @@ function generate_chain(dat, numerical_grad, turing_model;
                         opt=NUTS,
                         iterations=1000,
                         num_training_pts=500, start_ind=1)
-    n_adapts = Int(iterations/5)
+    n_adapts = Int(minimum([iterations/5, 100]))
     j_max = 1.0
     # Try to predict the GRADIENT from data
     train_ind = start_ind:num_training_pts+start_ind-1
     y = numerical_grad[:,train_ind]
     x = dat[:,train_ind]
+    # Turing 0.6.* syntax
     # chain = sample(turing_model(y, x),
     #                 NUTS(iterations, n_adapts, 0.6j_max));
     # Turing 0.7 syntax

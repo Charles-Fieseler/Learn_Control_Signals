@@ -1,7 +1,7 @@
 using Turing, Distributions
 
-include("../src/sindyc.jl")
-include("sindy_utils.jl")
+# include("../src/sindyc.jl")
+# include("sindy_utils.jl")
 
 #####
 ##### Helper functions for defining a Turing model from a SINDy struct
@@ -39,36 +39,49 @@ end
 Takes in a SINDy model and returns a Turing-compatible model that defines
     priors on each parameter with the proper variable names
     Enforces the 0s of the original model
+
+    convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
+                                    dat_noise_prior=Normal(5, 5.0),
+                                    coef_noise_std=1.0)
 """
 function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
                                 dat_noise_prior=Normal(5, 5.0),
                                 coef_noise_std=1.0)
     n_in, n_aug = size(model.A)
-    total_terms = n_in * n_aug
+    # total_terms = n_in * n_aug
 
-    prior_coef = sindy_mat2vec(model.A)
+    # prior_coef = sindy_mat2vec(model.A)
 
     @model turing_model(y, dat) = begin
         # Set the priors using the passed model parameters
-        all_coef = Array{Union{Real, Distribution}}(undef, total_terms)
-        for (i, coef) in enumerate(prior_coef)
-            if abs(prior_coef[i]) > 0.0
-                all_coef[i] ~ Normal(prior_coef[i], coef_noise_std)
-            else
-                # all_coef[i] ~ Normal(0.0, 1e-4)
-                all_coef[i] = 0.0
-            end
-        end
-        A = sindy_vec2mat(model, all_coef)
+        # all_coef = Array{Union{Real, Distribution}}(undef, total_terms)
+        # for (i, coef) in enumerate(prior_coef)
+        #     if abs(prior_coef[i]) > 0.0
+        #         all_coef[i] ~ Normal(prior_coef[i], coef_noise_std)
+        #     else
+        #         # all_coef[i] ~ Normal(0.0, 1e-4)
+        #         all_coef[i] = 0.0
+        #     end
+        # end
+        term_ind = get_nonzero_terms(model)
+        term_val = model.A[term_ind]
+        # all_coef = Array(undef, length(term_ind))
+        all_coef ~ MvNormal(term_val, coef_noise_std)
+        # for t in term_val
+        #     all_coef ~ Normal(t, coef_noise_std)
+        # end
+        # A = sindy_vec2mat(model, all_coef)
         noise ~ Truncated(dat_noise_prior, 0, 100)
         # Predict the gradient at each time step (grid collocation)
         for i in 1:size(y,2)
-            preds = sindy_predict(model, all_coef, dat[:,i])
+            preds = sindy_predict(model, all_coef, dat[:,i],
+                        nonzero_terms=term_ind)
             # TODO: does this loop actually work?
-            for i_var in 1:n_in
-                y[i_var, i] ~ Normal(preds[i_var], noise)
-            end
-            # y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
+            # for i_var in 1:n_in
+            #     y[i_var, i] ~ Normal(preds[i_var], noise)
+            # end
+            # @show preds
+            y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
         end
     end;
 
@@ -89,16 +102,31 @@ end
 #####
 ##### Helper functions for readable prediction
 #####
-function sindy_predict(model::sindyc_model, coef::AbstractMatrix,
-                        dat::AbstractVecOrMat)
+# function sindy_predict(model::sindyc_model, coef::AbstractMatrix,
+#                         dat::AbstractVecOrMat)
+#     dat_aug = augment_data(model, dat)
+#     predictions = coef * convert.(eltype(coef),dat_aug)
+#     return predictions
+# end
+"""Skips full matrix multiplication; only does the nonzero coefficients"""
+function sindy_predict(model::sindyc_model, coef, dat; nonzero_terms=nothing)
+    if nonzero_terms==nothing
+        nonzero_terms=get_nonzero_terms(model, linear_indices=false)
+    end
     dat_aug = augment_data(model, dat)
-    predictions = coef * convert.(eltype(coef),dat_aug)
+    original_ind = CartesianIndices(model.A)
+    predictions = zeros(eltype(coef), size(dat))
+    for (coef_ind,mat_ind) in enumerate(nonzero_terms)
+        var, dat_ind = Tuple(mat_ind)
+        # @show mat_ind, coef_ind
+        predictions[var] += coef[coef_ind] * dat_aug[dat_ind]
+    end
     return predictions
 end
 
 # Vector input version
-sindy_predict(model::sindyc_model, coef::AbstractVector, dat::AbstractVecOrMat) =
-    sindy_predict(model, sindy_vec2mat(model, coef), dat)
+# sindy_predict(model::sindyc_model, coef::AbstractVector, dat::AbstractVecOrMat) =
+#     sindy_predict(model, sindy_vec2mat(model, coef), dat)
 
 #####
 ##### Creating model instances from chains
@@ -109,7 +137,8 @@ function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.Abstra
     coef_sample = sample(chain, 2) # sample size of 1 gives error
     coef_vec = Array(coef_sample)[1,1:end-1] # Leave out noise
     if length(coef_vec) < n_total
-        # Assume they are a subset of the A matrix
+        # Assume they are a subset of the A matrix, and
+        # the proper index is in their name
         #   Add zeros to the other parameters
         var_names = coef_sample.name_map[:parameters][1:end-1]
         coef_tmp = zeros(n_total)
@@ -130,4 +159,5 @@ function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.Abstra
     return new_model
 end
 
-export convert_sindy_to_turing, sindy_from_chain
+export convert_sindy_to_turing, convert_sindy_to_turing_enforce_zeros,
+        sindy_from_chain

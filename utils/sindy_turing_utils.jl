@@ -48,39 +48,16 @@ function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
                                 dat_noise_prior=Normal(5, 5.0),
                                 coef_noise_std=1.0)
     n_in, n_aug = size(model.A)
-    # total_terms = n_in * n_aug
-
-    # prior_coef = sindy_mat2vec(model.A)
 
     @model turing_model(y, dat) = begin
-        # Set the priors using the passed model parameters
-        # all_coef = Array{Union{Real, Distribution}}(undef, total_terms)
-        # for (i, coef) in enumerate(prior_coef)
-        #     if abs(prior_coef[i]) > 0.0
-        #         all_coef[i] ~ Normal(prior_coef[i], coef_noise_std)
-        #     else
-        #         # all_coef[i] ~ Normal(0.0, 1e-4)
-        #         all_coef[i] = 0.0
-        #     end
-        # end
         term_ind = get_nonzero_terms(model)
         term_val = model.A[term_ind]
-        # all_coef = Array(undef, length(term_ind))
         all_coef ~ MvNormal(term_val, coef_noise_std)
-        # for t in term_val
-        #     all_coef ~ Normal(t, coef_noise_std)
-        # end
-        # A = sindy_vec2mat(model, all_coef)
         noise ~ Truncated(dat_noise_prior, 0, 100)
         # Predict the gradient at each time step (grid collocation)
         for i in 1:size(y,2)
             preds = sindy_predict(model, all_coef, dat[:,i],
                         nonzero_terms=term_ind)
-            # TODO: does this loop actually work?
-            # for i_var in 1:n_in
-            #     y[i_var, i] ~ Normal(preds[i_var], noise)
-            # end
-            # @show preds
             y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
         end
     end;
@@ -131,11 +108,19 @@ end
 #####
 ##### Creating model instances from chains
 #####
-function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.AbstractChains)
-    n_total = length(model_template.A)
+function sindy_from_chain(model_template::sindyc_model,
+                          chain::MCMCChains.AbstractChains;
+                          enforced_zeros=true)
+    if enforced_zeros
+        nonzero_terms = get_nonzero_terms(model_template)
+        # @warn("model_template should have the same
+        #         nonzeros structure as the desired model!")
+    end
 
+    n_total = length(model_template.A)
     coef_sample = sample(chain, 2) # sample size of 1 gives error
     coef_vec = Array(coef_sample)[1,1:end-1] # Leave out noise
+    subs2ind = CartesianIndices(model_template.A)
     if length(coef_vec) < n_total
         # Assume they are a subset of the A matrix, and
         # the proper index is in their name
@@ -143,8 +128,15 @@ function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.Abstra
         var_names = coef_sample.name_map[:parameters][1:end-1]
         coef_tmp = zeros(n_total)
         for i in 1:n_total
-            match_ind = occursin.("[$i]", var_names)
-            if any(match_ind)
+            if enforced_zeros
+                match_ind = findall(x->subs2ind[i]==x, nonzero_terms)
+                found_match = (length(match_ind)==1)
+            else
+                # If no explicit mapping
+                match_ind = occursin.("[$i]", var_names)
+                found_match = any(match_ind)
+            end
+            if found_match
                 coef_tmp[i] = coef_vec[match_ind][1]
             end
         end
@@ -159,5 +151,31 @@ function sindy_from_chain(model_template::sindyc_model, chain::MCMCChains.Abstra
     return new_model
 end
 
+
+"""
+Generate test realizations of the gradient from the posterior of the system
+    parameters. No integration is performed
+    Additional function to work with SINDy models
+"""
+function sample_sindy_posterior_grad(chain, dat, sample_ind, sindy_template;
+                                num_samples=100, t = [0], enforced_zeros=true)
+    sindy_samples = [sindy_from_chain(sindy_template, chain, enforced_zeros=enforced_zeros)
+                        for i in 1:num_samples]
+    all_vals = zeros(num_samples, length(sample_ind), size(dat,1))
+    for i in 1:num_samples
+        this_model = sindy_samples[i]
+        for (i_save, i_dat) in enumerate(sample_ind)
+            all_vals[i, i_save, :] = this_model(dat[:,i_dat], t)
+        end
+    end
+    all_noise = Array(sample(chain[:noise], num_samples))
+
+    return (sample_trajectories=all_vals, sample_noise=all_noise)
+end
+
+
+
+
+
 export convert_sindy_to_turing, convert_sindy_to_turing_enforce_zeros,
-        sindy_from_chain
+        sindy_from_chain, sample_sindy_posterior_grad

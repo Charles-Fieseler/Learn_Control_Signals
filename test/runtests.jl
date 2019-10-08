@@ -1,6 +1,9 @@
-using PkgSRA
-using Test
+using PkgSRA, Test
 
-@testset "PkgSRA.jl" begin
-    # Write your own tests here.
+@testset "sindy_turing_test.jl" begin
+    include("sindy_turing_test.jl")
+end
+
+@testset "sindy_test.jl" begin
+    include("sindy_test.jl")
 end

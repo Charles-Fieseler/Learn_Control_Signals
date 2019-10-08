@@ -16,10 +16,10 @@ include("../scripts/paper_settings.jl")
 include(EXAMPLE_FOLDERNAME*"example_lorenz.jl")
 
 # Define the multivariate forcing function
-num_ctr = 100;
+num_ctr = 50;
     U_starts = rand(3, num_ctr) .* tspan[2]
-    U_widths = [0.05, 0.05, 0.05];
-    amplitudes = [50.0, 50.0, 50.0]
+    U_widths = [0.1, 0.1, 0.1];
+    amplitudes = [100.0, 100.0, 100.0]
 my_U_func_time2(t, u) = U_func_time_multivariate(t, u,
                         U_widths, U_starts,
                         F_dim=[1, 2, 3],
@@ -63,19 +63,22 @@ Random.seed!(13)
 sindy_unctr =  sindyc(dat, numerical_grad,
                         library=sindy_library, use_lasso=true)
 grad_unctr = sindy_unctr(dat)
-let d = grad_unctr, d0 = numerical_grad
-    plot(d[1,:],d[2,:],d[3,:],label="Model")
-    plot!(d0[1,:],d0[2,:],d0[3,:],label="Data")
-    title!("Gradients (L2 SINDy model)")
-end
+# let d = grad_unctr, d0 = numerical_grad
+#     plot(d[1,:],d[2,:],d[3,:],label="Model")
+#     plot!(d0[1,:],d0[2,:],d0[3,:],label="Data")
+#     title!("Gradients (L2 SINDy model)")
+# end
 # WARNING: generate_chain MIGHT take a very long time!
 turing_unctr = convert_sindy_to_turing_enforce_zeros(sindy_unctr;
                                 dat_noise_prior=Normal(0.0, 1.0),
                                 coef_noise_std=0.01)
 chain = generate_chain(dat, numerical_grad, turing_unctr,
-                            iterations=10,
-                            num_training_pts=10, start_ind=101)[1]
-turing_unctr_sample = sindy_from_chain(core_dyn_true, chain)
+                            iterations=500,
+                            num_training_pts=100, start_ind=101)[1]
+turing_unctr_sample = sindy_from_chain(sindy_unctr, chain,
+                                        enforced_zeros=true)
+
+# density(chain)
 
 # Generate samples of the gradient time series from the posterior
 
@@ -95,23 +98,26 @@ plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
     title!("Integrated Turing model")
 
 # Get the full posterior distribution
-vars = chain.name_map[:parameters][1:end-1]
+# vars = chain.name_map[:parameters][1:end-1]
 # vars = [:ρ, :σ, :β]
 sample_ind = 1:length(ts)
-sample_gradients, sample_noise = sample_posterior_grad(chain,
-            dat, sample_ind, vars, lorenz_system)
-let y = sample_gradients[1,:,:], y2 = sample_gradients[2,:,:], n=numerical_grad
-    plot3d(y[:,1], y[:,2], y[:,3], label="Naive Sample 1")
-    plot3d!(y2[:,1], y2[:,2], y2[:,3], label="Naive Sample 2")
-    plot3d!(n[1,:], n[2,:], n[3,:], label="Data")
-    title!("Sampled Turing Gradients")
-end
+# sample_gradients, sample_noise = sample_posterior_grad(chain,
+#             dat, sample_ind, vars, lorenz_system)
+sample_gradients3d, sample_noise = sample_sindy_posterior_grad(chain,
+            dat, sample_ind, sindy_unctr)
+
+# let y = sample_gradients3d[1,:,:], y2 = sample_gradients3d[2,:,:], n=numerical_grad
+#     plot3d(y[:,1], y[:,2], y[:,3], label="Naive Sample 1")
+#     plot3d!(y2[:,1], y2[:,2], y2[:,3], label="Naive Sample 2")
+#     plot3d!(n[1,:], n[2,:], n[3,:], label="Data")
+#     title!("Sampled Turing Gradients")
+# end
 # Generate test trajectories from the posterior
 # sample_trajectories = sample_posterior_trajectories(
 #                                 chain, dat, sample_ind, vars, lorenz_system,
 #                                 tspan, ts, num_samples=5)[1]
 # Calculate the residuals
-sample_gradients = transpose(drop_all_1dims(mean(sample_gradients, dims=1)))
+sample_gradients = transpose(drop_all_1dims(mean(sample_gradients3d, dims=1)))
     sample_trajectory_noise = mean(sample_noise)
 
 
@@ -122,17 +128,18 @@ residual = dat_grad .- sample_gradients
 ctr_guess = process_residual(residual, sample_trajectory_noise)
 
 # Visualization
+ind = 1:300
+# ind = sample_ind
+# i = 1
+#     plot(dat_grad[i,:], label="Data gradient")
+#     plot!(sample_gradients[i,:], label="Sample gradient")
 i = 1
-    plot(dat_grad[i,:], label="Data gradient")
-    plot!(sample_gradients[i,:], label="Sample gradient")
-i = 1
-    plot(residual[i,:], ribbon=sample_trajectory_noise)
-    plot!(U_true[i,:], label="True")
+    plot(residual[i,ind], ribbon=sample_trajectory_noise)
+    plot!(U_true[i,ind], label="True")
     title!("Residual and true control")
 i = 1
-    # ind = 1:300
-    plot(ctr_guess[i,:], label="Control guess")
-    plot!(U_true[i,:], label="True", show=true)
+    plot(ctr_guess[i,ind], label="Control guess")
+    plot!(U_true[i,ind], label="True", show=true)
 
 #####
 ##### Create a new model, subtracting the residual

@@ -13,14 +13,26 @@ DAT_FOLDERNAME = BASE_FOLDERNAME*"paper\\dat\\"
 #               "control_true"=>[140, 0, 0],
 #               "control_time"=>[227, 0, 0],
 #               "control_space"=>[255, 128, 0])
-COLOR_DICT = Dict("true"=>:black, # Should be dashed
-              "data"=>:grey,
-              "model_uncontrolled"=>:teal,
-              "model_controlled"=>:deepskyblue,
-              "prediction"=>:black,
-              "intrinsic_true"=>:mediumblue,
-              "intrinsic"=>:deepskyblue,
-              "residual"=>:blue,
-              "control_true"=>:red,
-              "control_time"=>:darkorange,
-              "control_space"=>:darkorange)
+# COLOR_DICT = Dict("true"=>:black, # Should be dashed
+#               "data"=>:grey,
+#               "model_uncontrolled"=>:teal,
+#               "model_controlled"=>:deepskyblue,
+#               "prediction"=>:black,
+#               "intrinsic_true"=>:mediumblue,
+#               "intrinsic"=>:deepskyblue,
+#               "residual"=>:blue,
+#               "control_true"=>:red,
+#               "control_time"=>:darkorange,
+#               "control_space"=>:darkorange)
+
+  COLOR_DICT = Dict("true"=>:black, # Should be dashed
+                "data"=>:grey,
+                "model_uncontrolled"=>:blue,
+                "model_controlled"=>:purple,
+                "prediction"=>:black,
+                "intrinsic_true"=>:blue,
+                "intrinsic"=>:blue,
+                "residual"=>:blue,
+                "control_true"=>:black,
+                "control_time"=>:red,
+                "control_space"=>:red)

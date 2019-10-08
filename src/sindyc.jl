@@ -26,4 +26,4 @@ intrinsic_dynamics(m::sindyc_model, X) = m.A*augment_data(m, X)
 control_signal(m::sindyc_model, t) = m.B*m.U_func(t)
 control_signal(m::sindyc_model) = m.B*m.U
 
-export sindyc_model
+export sindyc_model, augment_data, intrinsic_dynamics, control_signal

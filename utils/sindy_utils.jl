@@ -1,8 +1,8 @@
 using Interpolations, DataStructures, Lasso, DataFrames, Flux
-include("../src/sindyc.jl")
-include("../src/dmdc.jl");
-include("../utils/combinatorics_utils.jl");
-include("../utils/regression_utils.jl")
+# include("../src/sindyc.jl")
+# include("../src/dmdc.jl");
+# include("../utils/combinatorics_utils.jl");
+# include("../utils/regression_utils.jl")
 
 #####
 ##### Fitting function; effectively the default constructor
@@ -129,6 +129,17 @@ function print_equations(model::sindyc_model;
     end
     println()
 end
+
+function get_nonzero_terms(model::sindyc_model; linear_indices=false)
+    # A = reshape(model.A, length(model.A))
+    if linear_indices
+        lin = LinearIndices(model.A)
+        return lin[findall(abs.(model.A).>0.0)]
+    else
+        return findall(abs.(model.A).>0.0)
+    end
+end
+
 
 #####
 ##### Helper functions for nonlinear terms
@@ -298,4 +309,4 @@ end
 
 export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
-    build_dataframe, sindyc, print_equations
+    build_dataframe, sindyc, print_equations, get_nonzero_terms

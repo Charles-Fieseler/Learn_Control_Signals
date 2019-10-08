@@ -145,25 +145,41 @@ noise_factor = 1.0
 partial_accepted_ind = abs.(residual) .< (noise_factor*sample_trajectory_noise)
 accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
 
-num_pts = 100
+num_pts = 200
 subsample_ind = findall(accepted_ind.==1)[1:num_pts]
 
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
 
+# Any control signal in the subset?
+# U_sub = U_true[:,subsample_ind]
+# plot(U_sub[1,:])
+
+# SINDY SETUP
 sindy_sub =  sindyc(dat_sub, grad_sub,
                         library=sindy_library, use_lasso=true)
+
+(best_model, best_criterion,all_criteria,all_models) =
+    sindyc_ensemble(X, X_grad, library, quantile_list,
+                                    selection_criterion=aic)
+
+# TURING ANALYSIS
 turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
                                 dat_noise_prior=Normal(0.0, 5.0),
-                                coef_noise_std=0.1)
+                                coef_noise_std=1.0)
 chain_sub = generate_chain(dat, numerical_grad, turing_sub,
                             train_ind=subsample_ind,
-                            iterations=100)[1]
+                            iterations=200)[1]
 turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
                                         enforced_zeros=true)
 plot(chain_sub["all_coef[7]"])
 
+
+println("SINDy of subset")
+print_equations(sindy_sub)
+println("Turing-SINDy of subset")
 print_equations(turing_sub_sample)
+println("True")
 print_equations(core_dyn_true)
 
 

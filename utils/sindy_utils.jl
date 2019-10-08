@@ -30,8 +30,8 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 use_lasso=false,
                 hard_threshold=nothing,
                 quantile_threshold=0.1,
-                var_names = ["x", "y", "z"])
-                #TODO: implement custom functions
+                var_names=["x", "y", "z"])
+                #TODO: allow custom library functions
     if X_grad == nothing
         X_grad = numerical_derivative(X)
     end

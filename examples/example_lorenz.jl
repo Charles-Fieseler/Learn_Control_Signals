@@ -33,7 +33,7 @@ end
 # Generate data, with a time component
 p = [28, 10, 8//3]
 u0 = [10.0f0, 0.0f0, 0.0f0]
-ts = range(tspan[1], tspan[2], length=1000)
+ts = range(tspan[1], tspan[2], length=5000)
 
 function solve_lorenz_system(U_func_time=U_func_time_trivial,
                               U_func_space=U_func_space_trivial)

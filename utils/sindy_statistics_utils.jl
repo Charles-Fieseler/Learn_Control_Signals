@@ -47,7 +47,8 @@ Loop over several values of sparsity and choose the best model via
 function sindyc_ensemble(X, X_grad, library, val_list;
                 selection_criterion=my_aic,
                 selection_dist=Normal(),
-                sparsification_mode="quantile")
+                sparsification_mode="quantile",
+                use_clustering_minimization=false)
     n = length(val_list)
     all_models = Vector(undef, n)
     all_criteria = zeros(n)
@@ -72,7 +73,20 @@ function sindyc_ensemble(X, X_grad, library, val_list;
         all_models[i] = m
     end
 
-    best_criterion, best_index = findmin(all_criteria)
+    if !use_clustering_minimization
+        best_criterion, best_index = findmin(all_criteria)
+    else
+        # Use AIC, but get the sparsest of the similar models
+        #   Very helpful when the noise is highly Non-Gaussian
+        tmp = reshape(all_criteria, length(all_criteria),1)
+        c = kmeans(tmp', 6) # TODO: learn the number of clusters
+        ind = findmin(all_criteria)[2]
+        best_model_clust = c.assignments[ind]
+        clust_ind_in_all_models = findall(c.assignments.==best_model_clust)
+        nnz = sum.(val_list)[clust_ind_in_all_models]
+        best_criterion, model_ind_in_clust = findmin(nnz)
+        best_index = clust_ind_in_all_models[model_ind_in_clust]
+    end
 
     return (best_model=all_models[best_index],
             best_criterion=best_criterion,

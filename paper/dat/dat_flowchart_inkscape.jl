@@ -91,6 +91,7 @@ val_list = calc_permutations(5,3)
                     selection_dist=Normal(0.0,20),
                     use_clustering_minimization=true)
 print_equations(sindy_unctr)
+sindy_grad1 = sindy_unctr(dat, 0)
 # scatter(sum.(val_list), all_criteria)
 
 # Generate a full trajectory from SINDy model
@@ -182,24 +183,27 @@ i = 2
 accepted_ind = subsample_using_residual(residual,
             sample_trajectory_noise, min_length=4)
 
-num_pts = 300
-subsample_ind = accepted_ind[1:num_pts]
+num_pts = 400
+start_ind = 1
+subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1]
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
 
 # Any control signal in the subset?
 U_sub = U_true[:,subsample_ind]
 plot(U_sub')
+    # plot!(residual[:,subsample_ind]', ribbon=sample_trajectory_noise)
     title!("Control signals in the subsampled dataset")
 
 # SINDY SETUP
 val_list = calc_permutations(5,3)
-(sindy_sub,best_criterion,all_criteria,all_models) =
+(sindy_sub,best_criterion,all_criteria,all_models,best_index) =
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
                     selection_dist=Normal(0.0,sample_trajectory_noise),
                     use_clustering_minimization=true)
+println("Best index is $best_index")
 print_equations(sindy_sub)
 scatter(sum.(val_list), all_criteria)
     title!("AIC for various sparsities")
@@ -208,34 +212,60 @@ scatter(sum.(val_list), all_criteria)
 # Generate a single trajectory
 prob_ctr = ODEProblem(sindy_sub, u0, tspan, [0], callback=cb)
 dat_ctrL2 = Array(solve(prob_ctr, Tsit5(), saveat=ts));
+sindy_grad2 = sindy_sub(dat, 0)
 
 plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
     plot!(dat_ctrL2[1,:],dat_ctrL2[2,:],dat_ctrL2[3,:],label="Turing model with enforced zeros")
-    title!("Integrated Turing model (after control)")
+    title!("Integrated SINDy model (after control)")
+
+i = 1
+    plot(dat_grad[i,ind], label="Data Gradient")
+    plot!(sindy_grad1[i,ind], label="Old SINDy gradient")
+    plot!(sindy_grad2[i,ind], label="New SINDy Gradient")
 # TURING ANALYSIS
 turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
                                 dat_noise_prior=Normal(0.0, 5.0),
                                 coef_noise_std=1.0)
 chain_sub = generate_chain(dat, numerical_grad, turing_sub,
                             train_ind=subsample_ind,
-                            iterations=200)[1]
+                            iterations=100)[1]
 turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
                                         enforced_zeros=true)
 # Generate test trajectories from the CORRECTED posterior
 sample_gradients3d_ctr, sample_noise_ctr =
-            sample_sindy_posterior_grad(chain_ctr,
-                    dat, sample_ind, sindy_ctr)
+            sample_sindy_posterior_grad(chain_sub,
+                    dat, sample_ind, sindy_sub)
 # Calculate the residuals
-sample_trajectory_noise_ctr = mean(sample_noise_ctr)
+sample_gradients2 = transpose(drop_all_1dims(mean(sample_gradients3d_ctr, dims=1)))
+    sample_trajectory_noise_ctr = mean(sample_noise_ctr)
+# dat_grad2 = numerical_grad[:, sample_ind]
+
+residual2 = dat_grad .- sample_gradients2
+ctr_guess2 = process_residual(residual2, sample_trajectory_noise_ctr)
+
 # Generate a single full sample trajectory (FROM TURING)
 prob_ctr = ODEProblem(turing_sub_sample, u0, tspan, [0], callback=cb)
 dat_ctr = Array(solve(prob_ctr, Tsit5(), saveat=ts));
 
+# Plot!
+plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
+    plot!(dat_ctr[1,:],dat_ctr[2,:],dat_ctr[3,:],label="Turing model with enforced zeros")
+    title!("Integrated Turing model (after control)")
+i = 2
+    plot(residual[i,ind], ribbon=sample_trajectory_noise, label="Original residual")
+    plot!(residual2[i,ind], ribbon=sample_trajectory_noise_ctr, label="Residual2")
+    plot!(U_true[i,ind], label="True")
+    title!("Iteration 2: Residual and true control for i=$i")
+i = 2
+    plot(dat_grad[i,ind], label="Data gradient")
+    plot!(sample_gradients2[i,ind], label="Sample gradient2")
+    plot!(sample_gradients[i,ind], label="Sample gradient1")
+    title!("Gradient predictions")
 
 println("SINDy of subset")
 print_equations(sindy_sub)
-# println("Turing-SINDy of subset")
-# print_equations(turing_sub_sample)
+println("Turing-SINDy of subset")
+print_equations(turing_sub_sample)
 println("True")
 print_equations(core_dyn_true)
 

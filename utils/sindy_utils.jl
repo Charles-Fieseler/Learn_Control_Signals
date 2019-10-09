@@ -30,6 +30,7 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 use_lasso=false,
                 hard_threshold=nothing,
                 quantile_threshold=0.1,
+                num_terms=nothing,
                 var_names=["x", "y", "z"])
                 #TODO: allow custom library functions
     if X_grad == nothing
@@ -56,12 +57,14 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
         if U == nothing
             A = sparse_regression(X_augmented, X_grad,
                                 hard_threshold=hard_threshold,
-                                quantile_threshold=quantile_threshold)
+                                quantile_threshold=quantile_threshold,
+                                num_terms=num_terms)
         else
             Ω = [X_augmented; U]
             AB = sparse_regression(Ω, X_grad,
                                 hard_threshold=hard_threshold,
-                                quantile_threshold=quantile_threshold)
+                                quantile_threshold=quantile_threshold,
+                                num_terms=num_terms)
             A = AB[:, 1:size(X_augmented,1)]
             B = AB[:, size(X_augmented,1)+1:end]
         end

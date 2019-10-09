@@ -93,22 +93,6 @@ val_list = calc_permutations(5,3)
 print_equations(sindy_unctr)
 scatter(sum.(val_list), all_criteria)
 
-# Use AIC, but get the sparsest of the similar models
-# TODO: learn the number of clusters
-# tmp = reshape(all_criteria, length(all_criteria),1)
-# c = kmeans(tmp', 6)
-# ind = findmin(all_criteria)[2]
-# best_model_clust = c.assignments[ind]
-# clust_ind_in_all_models = findall(c.assignments.==best_model_clust)
-# nnz = sum.(val_list)[clust_ind_in_all_models]
-# model_ind_in_clust = findmin(nnz)[2]
-# model_ind_in_all_models = clust_ind_in_all_models[model_ind_in_clust]
-
-# NEW BEST MODEL
-sindy_unctr = all_models[]
-
-# sindy_unctr =  sindyc(dat, numerical_grad,
-#                         library=sindy_library, use_lasso=true)
 # grad_unctr = sindy_unctr(dat)
 # let d = grad_unctr, d0 = numerical_grad
 #     plot(d[1,:],d[2,:],d[3,:],label="Model")
@@ -157,7 +141,7 @@ residual = dat_grad .- sample_gradients
 ctr_guess = process_residual(residual, sample_trajectory_noise)
 
 # Visualization
-ind = 101:300
+ind = 101:1000
 # ind = sample_ind
 # i = 1
 #     plot(dat_grad[i,:], label="Data gradient")
@@ -187,43 +171,29 @@ i = 1
 #####
 
 # Get "confident" indices
-noise_factor = 1.0
-partial_accepted_ind = abs.(residual) .< (noise_factor*sample_trajectory_noise)
-partial_accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
-min_length = 4
-accepted_ind = calc_contiguous_blocks(
-        partial_accepted_ind, minimum_length=min_length)[1]
+accepted_ind = subsample_using_residual(residual,
+            sample_trajectory_noise, min_length=4)
 
 num_pts = 300
 subsample_ind = accepted_ind[1:num_pts]
-# subsample_ind = findall(accepted_ind.==1)[1:num_pts]
-
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
 
 # Any control signal in the subset?
 U_sub = U_true[:,subsample_ind]
 plot(U_sub')
+    title!("Control signals in the subsampled dataset")
 
 # SINDY SETUP
-sindy_sub =  sindyc(dat_sub, grad_sub,
-                    library=sindy_library,
-                    use_lasso=true,
-                    quantile_threshold=nothing,
-                    num_terms=3)
-
-# quantile_list = [0.01, 0.1, 0.3]
-# quantile_list = range(0.001, 0.25, length=20)
-# val_list = 1:10
 val_list = calc_permutations(5,3)
-(best_model,best_criterion,all_criteria,all_models) =
+(sindy_sub,best_criterion,all_criteria,all_models) =
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,sample_trajectory_noise))
-print_equations(best_model)
-nnz = length.(get_nonzero_terms.(all_models))
-scatter(nnz, all_criteria)
+                    selection_dist=Normal(0.0,sample_trajectory_noise),
+                    use_clustering_minimization=true)
+print_equations(sindy_sub)
+scatter(sum.(val_list), all_criteria)
     title!("AIC for various sparsities")
     xlabel!("Number of nonzero terms")
 
@@ -236,13 +206,13 @@ scatter(nnz, all_criteria)
 #                             iterations=200)[1]
 # turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
 #                                         enforced_zeros=true)
-plot(chain_sub["all_coef[7]"])
+# plot(chain_sub["all_coef[7]"])
 
 
 println("SINDy of subset")
 print_equations(sindy_sub)
-println("Turing-SINDy of subset")
-print_equations(turing_sub_sample)
+# println("Turing-SINDy of subset")
+# print_equations(turing_sub_sample)
 println("True")
 print_equations(core_dyn_true)
 
@@ -283,28 +253,6 @@ plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
 #     plot3d!(y2[1,:], y2[2,:], y2[3,:], label="Corrected Sample 2")
 #     plot3d!(n[1,:], n[2,:], n[3,:], label="Data")
 # end
-
-#####
-##### Initialize the controller NN
-#####
-# NOTE: doesn't really work to learn these spikes in time...
-# Note: Only doing a subset of the time series
-# nn_dim = 128
-#     U_dim = 3
-# ctr_dyn = Chain(Dense(1,nn_dim, initb=(x)-> tspan[2].*rand(x)),
-#                 Dense(nn_dim, nn_dim, σ),
-#                 Dense(nn_dim, nn_dim, σ),
-#                 Dense(nn_dim, U_dim))
-# ctr_ts = (collect(ts)[train_ind])'
-# ps = Flux.params(ctr_dyn)
-#     loss_U() = sum(abs2,ctr_dyn(ctr_ts) .- Float32.(ctr_guess))
-#     loss_to_use = loss_U
-#
-# # Initial fast learning
-# tol = 500
-# train_in_loop(ps, tol, loss_to_use, rate=1e-2, max_iter=3)
-# train_in_loop(ps, tol, loss_to_use, rate=1e-6, max_iter=3)
-# println("Finished learning control signal")
 
 
 #####

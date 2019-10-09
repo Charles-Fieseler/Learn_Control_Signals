@@ -175,7 +175,21 @@ end
 
 
 
+#####
+##### Helper functions for subsampling based on residuals
+#####
+function subsample_using_residual(residual, noise;
+                                  noise_factor=1.0,
+                                  min_length=3)
+    partial_accepted_ind = abs.(residual) .< (noise_factor*noise)
+    partial_accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
+    accepted_ind = calc_contiguous_blocks(
+            partial_accepted_ind, minimum_length=min_length)[1]
+    return accepted_ind
+end
 
 
+##
 export convert_sindy_to_turing, convert_sindy_to_turing_enforce_zeros,
-        sindy_from_chain, sample_sindy_posterior_grad
+        sindy_from_chain, sample_sindy_posterior_grad,
+        subsample_using_residual

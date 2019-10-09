@@ -32,12 +32,30 @@ my_U_func_time2(t, u) = U_func_time_multivariate(t, u,
 #####
 sol = solve_lorenz_system(my_U_func_time2)
 dat = Array(sol)
-
 # plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
-
 # Derivatives
 numerical_grad = numerical_derivative(dat, ts)
 
+## Also get baseline true/ideal cases
+# Uncontrolled
+dat_raw = Array(solve_lorenz_system())
+numerical_grad_raw = numerical_derivative(dat_raw, ts)
+true_grad_raw = zeros(size(dat))
+for i in 1:size(dat,2)
+    true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
+end
+# dat_raw += 0.1*randn(size(dat_raw))
+
+val_list = calc_permutations(5,3)
+(best_model_raw,best_criterion,all_criteria,all_models) =
+    sindyc_ensemble(dat_raw, true_grad_raw, sindy_library, val_list,
+                    selection_criterion=my_aicc,
+                    sparsification_mode="num_terms",
+                    selection_dist=Normal(0.0,20))
+print_equations(best_model_raw)
+scatter(sum.(val_list), all_criteria)
+
+# Controlled; true variables
 true_grad = zeros(size(dat))
 for i in 1:size(dat,2)
     true_grad[:,i] = lorenz_system(true_grad[:,i], dat[:,i], p, [0])
@@ -63,6 +81,15 @@ plot(U_true[3,:])
 #                         numerical_grad, lorenz_grad_residual)
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 Random.seed!(13)
+
+val_list = calc_permutations(5,3)
+(best_model_unctr,best_criterion,all_criteria,all_models) =
+    sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
+                    selection_criterion=my_aicc,
+                    sparsification_mode="num_terms",
+                    selection_dist=Normal(0.0,sample_trajectory_noise))
+print_equations(best_model_unctr)
+
 sindy_unctr =  sindyc(dat, numerical_grad,
                         library=sindy_library, use_lasso=true)
 grad_unctr = sindy_unctr(dat)
@@ -150,7 +177,7 @@ min_length = 4
 accepted_ind = calc_contiguous_blocks(
         partial_accepted_ind, minimum_length=min_length)[1]
 
-num_pts = 200
+num_pts = 300
 subsample_ind = accepted_ind[1:num_pts]
 # subsample_ind = findall(accepted_ind.==1)[1:num_pts]
 
@@ -171,12 +198,13 @@ sindy_sub =  sindyc(dat_sub, grad_sub,
 # quantile_list = [0.01, 0.1, 0.3]
 # quantile_list = range(0.001, 0.25, length=20)
 # val_list = 1:10
-val_list = calc_permutations(4,3)
+val_list = calc_permutations(5,3)
 (best_model,best_criterion,all_criteria,all_models) =
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
                     selection_dist=Normal(0.0,sample_trajectory_noise))
+print_equations(best_model)
 nnz = length.(get_nonzero_terms.(all_models))
 scatter(nnz, all_criteria)
     title!("AIC for various sparsities")

@@ -15,8 +15,8 @@ struct sindyc_model
     variable_names
 end
 
-(m::sindyc_model)(X) = m.A*augment_data(m, X) + m.B*m.U
-(m::sindyc_model)(X, t) = m.A*augment_data(m, X) + m.B*m.U_func(t)
+(m::sindyc_model)(X) = m.A*augment_data(m, X) .+ m.B*m.U
+(m::sindyc_model)(X, t) = m.A*augment_data(m, X) .+ m.B*m.U_func(t)
 (m::sindyc_model)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
 
 augment_data(m::sindyc_model, X) =

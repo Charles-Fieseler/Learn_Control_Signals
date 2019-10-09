@@ -91,7 +91,8 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     return (best_model=all_models[best_index],
             best_criterion=best_criterion,
             all_criteria=all_criteria,
-            all_models=all_models)
+            all_models=all_models,
+            best_index=best_index)
 end
 
 

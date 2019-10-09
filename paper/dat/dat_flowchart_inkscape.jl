@@ -10,9 +10,11 @@ Random.seed!(11)
 #####
 ##### Define the controlled dynamical system
 #####
-# Load example problem
+# Load helper functions
+include("../../utils/sindy_statistics_utils.jl")
 include("../../utils/sindy_turing_utils.jl")
 include("../scripts/paper_settings.jl")
+# Load example problem
 include(EXAMPLE_FOLDERNAME*"example_lorenz.jl")
 
 # Define the multivariate forcing function
@@ -143,35 +145,52 @@ i = 1
 # Get "confident" indices
 noise_factor = 1.0
 partial_accepted_ind = abs.(residual) .< (noise_factor*sample_trajectory_noise)
-accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
+partial_accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
+min_length = 4
+accepted_ind = calc_contiguous_blocks(
+        partial_accepted_ind, minimum_length=min_length)[1]
 
 num_pts = 200
-subsample_ind = findall(accepted_ind.==1)[1:num_pts]
+subsample_ind = accepted_ind[1:num_pts]
+# subsample_ind = findall(accepted_ind.==1)[1:num_pts]
 
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
 
 # Any control signal in the subset?
-# U_sub = U_true[:,subsample_ind]
-# plot(U_sub[1,:])
+U_sub = U_true[:,subsample_ind]
+plot(U_sub')
 
 # SINDY SETUP
 sindy_sub =  sindyc(dat_sub, grad_sub,
-                        library=sindy_library, use_lasso=true)
+                    library=sindy_library,
+                    use_lasso=true,
+                    quantile_threshold=nothing,
+                    num_terms=3)
 
-(best_model, best_criterion,all_criteria,all_models) =
-    sindyc_ensemble(X, X_grad, library, quantile_list,
-                                    selection_criterion=aic)
+# quantile_list = [0.01, 0.1, 0.3]
+# quantile_list = range(0.001, 0.25, length=20)
+# val_list = 1:10
+val_list = calc_permutations(4,3)
+(best_model,best_criterion,all_criteria,all_models) =
+    sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
+                    selection_criterion=my_aicc,
+                    sparsification_mode="num_terms",
+                    selection_dist=Normal(0.0,sample_trajectory_noise))
+nnz = length.(get_nonzero_terms.(all_models))
+scatter(nnz, all_criteria)
+    title!("AIC for various sparsities")
+    xlabel!("Number of nonzero terms")
 
 # TURING ANALYSIS
-turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
-                                dat_noise_prior=Normal(0.0, 5.0),
-                                coef_noise_std=1.0)
-chain_sub = generate_chain(dat, numerical_grad, turing_sub,
-                            train_ind=subsample_ind,
-                            iterations=200)[1]
-turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
-                                        enforced_zeros=true)
+# turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
+#                                 dat_noise_prior=Normal(0.0, 5.0),
+#                                 coef_noise_std=1.0)
+# chain_sub = generate_chain(dat, numerical_grad, turing_sub,
+#                             train_ind=subsample_ind,
+#                             iterations=200)[1]
+# turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
+#                                         enforced_zeros=true)
 plot(chain_sub["all_coef[7]"])
 
 

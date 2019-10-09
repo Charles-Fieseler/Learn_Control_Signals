@@ -36,24 +36,24 @@ dat = Array(sol)
 # Derivatives
 numerical_grad = numerical_derivative(dat, ts)
 
-## Also get baseline true/ideal cases
-# Uncontrolled
-dat_raw = Array(solve_lorenz_system())
-numerical_grad_raw = numerical_derivative(dat_raw, ts)
-true_grad_raw = zeros(size(dat))
-for i in 1:size(dat,2)
-    true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
-end
-# dat_raw += 0.1*randn(size(dat_raw))
-
-val_list = calc_permutations(5,3)
-(best_model_raw,best_criterion,all_criteria,all_models) =
-    sindyc_ensemble(dat_raw, true_grad_raw, sindy_library, val_list,
-                    selection_criterion=my_aicc,
-                    sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,20))
-print_equations(best_model_raw)
-scatter(sum.(val_list), all_criteria)
+# ## Also get baseline true/ideal cases
+# # Uncontrolled
+# dat_raw = Array(solve_lorenz_system())
+# numerical_grad_raw = numerical_derivative(dat_raw, ts)
+# true_grad_raw = zeros(size(dat))
+# for i in 1:size(dat,2)
+#     true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
+# end
+# # dat_raw += 0.1*randn(size(dat_raw))
+#
+# val_list = calc_permutations(5,3)
+# (best_model_raw,best_criterion,all_criteria,all_models) =
+#     sindyc_ensemble(dat_raw, true_grad_raw, sindy_library, val_list,
+#                     selection_criterion=my_aicc,
+#                     sparsification_mode="num_terms",
+#                     selection_dist=Normal(0.0,20))
+# print_equations(best_model_raw)
+# scatter(sum.(val_list), all_criteria)
 
 # Controlled; true variables
 true_grad = zeros(size(dat))
@@ -69,7 +69,7 @@ U_true = zeros(size(dat))
 for (i, t) in enumerate(ts)
     U_true[:,i] = my_U_func_time2(t, dat[:,i])
 end
-plot(U_true[3,:])
+plot(U_true')
 
 #####
 ##### Calculate distribution of residuals
@@ -82,25 +82,42 @@ plot(U_true[3,:])
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 Random.seed!(13)
 
+# Upgrade: Use AIC
 val_list = calc_permutations(5,3)
-(best_model_unctr,best_criterion,all_criteria,all_models) =
+(sindy_unctr,best_criterion,all_criteria,all_models) =
     sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,sample_trajectory_noise))
-print_equations(best_model_unctr)
+                    selection_dist=Normal(0.0,20),
+                    use_clustering_minimization=true)
+print_equations(sindy_unctr)
+scatter(sum.(val_list), all_criteria)
 
-sindy_unctr =  sindyc(dat, numerical_grad,
-                        library=sindy_library, use_lasso=true)
-grad_unctr = sindy_unctr(dat)
+# Use AIC, but get the sparsest of the similar models
+# TODO: learn the number of clusters
+# tmp = reshape(all_criteria, length(all_criteria),1)
+# c = kmeans(tmp', 6)
+# ind = findmin(all_criteria)[2]
+# best_model_clust = c.assignments[ind]
+# clust_ind_in_all_models = findall(c.assignments.==best_model_clust)
+# nnz = sum.(val_list)[clust_ind_in_all_models]
+# model_ind_in_clust = findmin(nnz)[2]
+# model_ind_in_all_models = clust_ind_in_all_models[model_ind_in_clust]
+
+# NEW BEST MODEL
+sindy_unctr = all_models[]
+
+# sindy_unctr =  sindyc(dat, numerical_grad,
+#                         library=sindy_library, use_lasso=true)
+# grad_unctr = sindy_unctr(dat)
 # let d = grad_unctr, d0 = numerical_grad
 #     plot(d[1,:],d[2,:],d[3,:],label="Model")
 #     plot!(d0[1,:],d0[2,:],d0[3,:],label="Data")
 #     title!("Gradients (L2 SINDy model)")
 # end
 turing_unctr = convert_sindy_to_turing_enforce_zeros(sindy_unctr;
-                                dat_noise_prior=Normal(0.0, 5.0),
-                                coef_noise_std=0.1)
+                                dat_noise_prior=Normal(0.0, 20.0),
+                                coef_noise_std=2.0)
 chain = generate_chain(dat, numerical_grad, turing_unctr,
                             iterations=200,
                             num_training_pts=100, start_ind=101)[1]

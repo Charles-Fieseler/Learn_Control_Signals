@@ -58,7 +58,8 @@ function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
         for i in 1:size(y,2)
             preds = sindy_predict(model, all_coef, dat[:,i],
                         nonzero_terms=term_ind)
-            y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
+            # y[:, i] ~ MvNormal(preds, noise.*ones(n_in))
+            y[:, i] ~ MvNormal(preds, [noise, noise, noise])
         end
     end;
 
@@ -79,12 +80,6 @@ end
 #####
 ##### Helper functions for readable prediction
 #####
-# function sindy_predict(model::sindyc_model, coef::AbstractMatrix,
-#                         dat::AbstractVecOrMat)
-#     dat_aug = augment_data(model, dat)
-#     predictions = coef * convert.(eltype(coef),dat_aug)
-#     return predictions
-# end
 """Skips full matrix multiplication; only does the nonzero coefficients"""
 function sindy_predict(model::sindyc_model, coef, dat; nonzero_terms=nothing)
     if nonzero_terms==nothing
@@ -95,15 +90,10 @@ function sindy_predict(model::sindyc_model, coef, dat; nonzero_terms=nothing)
     predictions = zeros(eltype(coef), size(dat))
     for (coef_ind,mat_ind) in enumerate(nonzero_terms)
         var, dat_ind = Tuple(mat_ind)
-        # @show mat_ind, coef_ind
         predictions[var] += coef[coef_ind] * dat_aug[dat_ind]
     end
     return predictions
 end
-
-# Vector input version
-# sindy_predict(model::sindyc_model, coef::AbstractVector, dat::AbstractVecOrMat) =
-#     sindy_predict(model, sindy_vec2mat(model, coef), dat)
 
 #####
 ##### Creating model instances from chains

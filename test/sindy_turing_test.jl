@@ -33,7 +33,7 @@ my_sindy_sample = sindy_from_chain(my_sindy_model,
 terms_sample = get_nonzero_terms(my_sindy_sample)
 @test terms == terms_sample
 
-# Test helper functions
+# Test helper prediction function
 pred1 = my_sindy_model(dat[:,1], 0)
 pred2 = sindy_predict(my_sindy_model,
                       my_sindy_model.A[terms],

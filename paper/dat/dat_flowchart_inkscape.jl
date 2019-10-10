@@ -36,15 +36,15 @@ dat = Array(sol)
 # Derivatives
 numerical_grad = numerical_derivative(dat, ts)
 
-# ## Also get baseline true/ideal cases
-# # Uncontrolled
-# dat_raw = Array(solve_lorenz_system())
-# numerical_grad_raw = numerical_derivative(dat_raw, ts)
-# true_grad_raw = zeros(size(dat))
-# for i in 1:size(dat,2)
-#     true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
-# end
-# # dat_raw += 0.1*randn(size(dat_raw))
+## Also get baseline true/ideal cases
+# Uncontrolled
+dat_raw = Array(solve_lorenz_system())
+numerical_grad_raw = numerical_derivative(dat_raw, ts)
+true_grad_raw = zeros(size(dat))
+for i in 1:size(dat,2)
+    true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
+end
+# dat_raw += 0.1*randn(size(dat_raw))
 #
 # val_list = calc_permutations(5,3)
 # (best_model_raw,best_criterion,all_criteria,all_models) =
@@ -98,10 +98,10 @@ sindy_grad1 = sindy_unctr(dat, 0)
 condition(u,t,integrator) = any(abs.(u).>2e2)
 cb = DiscreteCallback(condition, terminate!)
 prob_unctr = ODEProblem(sindy_unctr, u0, tspan, [0], callback=cb)
-dat_unctrL2 = Array(solve(prob_unctr, Tsit5(), saveat=ts));
+sindy_dat_unctr = Array(solve(prob_unctr, Tsit5(), saveat=ts));
 
 plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
-    plot!(dat_unctrL2[1,:],dat_unctrL2[2,:],dat_unctrL2[3,:],label="Turing model with enforced zeros")
+    plot!(sindy_dat_unctr[1,:],sindy_dat_unctr[2,:],sindy_dat_unctr[3,:],label="Turing model with enforced zeros")
     title!("Integrated SINDy model")
 
 # grad_unctr = sindy_unctr(dat)
@@ -125,7 +125,8 @@ prob_unctr = ODEProblem(turing_unctr_sample, u0, tspan, [0], callback=cb)
 sol_unctr = solve(prob_unctr, Tsit5(), saveat=ts);
 dat_unctr = Array(sol_unctr)
 
-plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
+# plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
+plot(dat_raw[1,:],dat_raw[2,:],dat_raw[3,:],label="Data")
     plot!(dat_unctr[1,:],dat_unctr[2,:],dat_unctr[3,:],label="Turing model with enforced zeros")
     title!("Integrated Turing model")
 
@@ -183,8 +184,8 @@ i = 2
 accepted_ind = subsample_using_residual(residual,
             sample_trajectory_noise, min_length=4)
 
-num_pts = 400
-start_ind = 1
+num_pts = 300
+start_ind = 101
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1]
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
@@ -211,41 +212,55 @@ scatter(sum.(val_list), all_criteria)
 
 # Generate a single trajectory
 prob_ctr = ODEProblem(sindy_sub, u0, tspan, [0], callback=cb)
-dat_ctrL2 = Array(solve(prob_ctr, Tsit5(), saveat=ts));
-sindy_grad2 = sindy_sub(dat, 0)
+sindy_dat_ctr = Array(solve(prob_ctr, Tsit5(), saveat=ts));
+sindy_grad_ctr = sindy_sub(dat, 0)
 
 plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
-    plot!(dat_ctrL2[1,:],dat_ctrL2[2,:],dat_ctrL2[3,:],label="Turing model with enforced zeros")
+    plot!(sindy_dat_ctr[1,:],sindy_dat_ctr[2,:],sindy_dat_ctr[3,:],label="Turing model with enforced zeros")
     title!("Integrated SINDy model (after control)")
 
 i = 1
     plot(dat_grad[i,ind], label="Data Gradient")
     plot!(sindy_grad1[i,ind], label="Old SINDy gradient")
-    plot!(sindy_grad2[i,ind], label="New SINDy Gradient")
+    plot!(sindy_grad_ctr[i,ind], label="New SINDy Gradient")
+
+# Just get the residual from the SINDy model, not Turing
+residual_ctr = dat_grad .- sindy_grad_ctr
+
+i = 2
+    plot(residual[i,ind], ribbon=sample_trajectory_noise, label="Original residual")
+    plot!(residual_ctr[i,ind], label="Residual2")
+    plot!(U_true[i,ind], label="True")
+    title!("Iteration 2: Residual and true control for i=$i")
+
+
+
 # TURING ANALYSIS
 turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
-                                dat_noise_prior=Normal(0.0, 5.0),
-                                coef_noise_std=1.0)
+                                dat_noise_prior=Normal(0.0, 1.0),
+                                coef_noise_std=0.1)
 chain_sub = generate_chain(dat, numerical_grad, turing_sub,
                             train_ind=subsample_ind,
-                            iterations=100)[1]
+                            iterations=200)[1]
 turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
                                         enforced_zeros=true)
 # Generate test trajectories from the CORRECTED posterior
 sample_gradients3d_ctr, sample_noise_ctr =
             sample_sindy_posterior_grad(chain_sub,
                     dat, sample_ind, sindy_sub)
+
+density(chain_sub)
 # Calculate the residuals
-sample_gradients2 = transpose(drop_all_1dims(mean(sample_gradients3d_ctr, dims=1)))
+sample_gradients_ctr = transpose(drop_all_1dims(mean(sample_gradients3d_ctr, dims=1)))
     sample_trajectory_noise_ctr = mean(sample_noise_ctr)
 # dat_grad2 = numerical_grad[:, sample_ind]
 
-residual2 = dat_grad .- sample_gradients2
+residual2 = dat_grad .- sample_gradients_ctr
 ctr_guess2 = process_residual(residual2, sample_trajectory_noise_ctr)
 
 # Generate a single full sample trajectory (FROM TURING)
 prob_ctr = ODEProblem(turing_sub_sample, u0, tspan, [0], callback=cb)
-dat_ctr = Array(solve(prob_ctr, Tsit5(), saveat=ts));
+turing_dat_ctr = Array(solve(prob_ctr, Tsit5(), saveat=ts));
 
 # Plot!
 plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
@@ -258,7 +273,7 @@ i = 2
     title!("Iteration 2: Residual and true control for i=$i")
 i = 2
     plot(dat_grad[i,ind], label="Data gradient")
-    plot!(sample_gradients2[i,ind], label="Sample gradient2")
+    plot!(sample_gradients_ctr[i,ind], label="Sample gradient2")
     plot!(sample_gradients[i,ind], label="Sample gradient1")
     title!("Gradient predictions")
 
@@ -273,49 +288,17 @@ print_equations(core_dyn_true)
 
 
 #####
-##### Create a new model, subtracting the residual
-#####
-# Try to predict the MODIFIED GRADIENT from data
-# y = numerical_grad[:,sample_ind] .- ctr_guess
-# sindy_ctr =  sindyc(dat, y, library=sindy_library, use_lasso=true)
-# turing_ctr = convert_sindy_to_turing_enforce_zeros(sindy_ctr;
-#                                 dat_noise_prior=Normal(0.0, 1.0),
-#                                 coef_noise_std=0.1)
-# chain_ctr = generate_chain(dat, y, turing_ctr,
-#                             iterations=200,
-#                             num_training_pts=200, start_ind=101)[1]
-# turing_ctr_sample = sindy_from_chain(sindy_ctr, chain_ctr,
-#                                         enforced_zeros=true)
-#
-# # Generate test trajectories from the CORRECTED posterior
-# sample_gradients3d_ctr, sample_noise_ctr =
-#             sample_sindy_posterior_grad(chain_ctr,
-#                     dat, sample_ind, sindy_ctr)
-# # Calculate the residuals
-# sample_trajectory_noise_ctr = mean(sample_noise_ctr)
-# # Generate a single full sample trajectory (FROM TURING)
-# prob_ctr = ODEProblem(turing_ctr_sample, u0, tspan, [0], callback=cb)
-# sol_ctr = solve(prob_ctr, Tsit5(), saveat=ts);
-# dat_ctr = Array(sol_ctr)
-#
-# plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
-#     plot!(dat_ctr[1,:],dat_ctr[2,:],dat_ctr[3,:],label="Turing model with enforced zeros")
-#     title!("Integrated Turing model (with control)")
-# let y = sample_gradients3d_ctr[1,:,:]', y2 = sample_gradients3d_ctr[2,:,:]', n=numerical_grad
-#     plot3d(y[1,:], y[2,:], y[3,:], label="Corrected Sample 1")
-#     plot3d!(y2[1,:], y2[2,:], y2[3,:], label="Corrected Sample 2")
-#     plot3d!(n[1,:], n[2,:], n[3,:], label="Data")
-# end
-
-
-#####
 ##### Save everything; plotted in a different script
 #####
 this_dat_name = DAT_FOLDERNAME*"TMP_dat_flowchart_inkscape_"
 
 # Intermediate data
 fname = this_dat_name*"intermediate.bson";
-@save fname chain chain_sub sol sample_gradients sample_trajectories_ctr sample_noise sample_noise_ctr sample_ind numerical_grad
+@save fname chain chain_sub sol sample_gradients sample_gradients_ctr sample_noise sample_noise_ctr sample_ind numerical_grad
+
+# Uncontrolled data
+fname = this_dat_name*"uncontrolled_lorenz.bson"
+@save fname dat_raw numerical_grad_raw
 
 # Original ODE and controller variables
 fname = this_dat_name*"ode_vars.bson";
@@ -323,10 +306,14 @@ fname = this_dat_name*"ode_vars.bson";
 
 # Bayesian variables 1: before control
 fname = this_dat_name*"naive_vars.bson";
-@save fname dat_unctrL2 dat_unctr sample_trajectory_noise residual accepted_ind
+@save fname sindy_dat_unctr dat_unctr sample_trajectory_noise residual accepted_ind ctr_guess
+
+# SINDY variables 2: after control
+fname = this_dat_name*"ctr_vars_sindy.bson";
+@save fname sindy_sub sindy_dat_ctr sindy_grad_ctr
 
 # Bayesian variables 2: after control
-fname = this_dat_name*"ctr_vars.bson";
-@save fname sindy_sub dat_ctrL2 dat_ctr sample_trajectory_noise_ctr #sample_trajectories_ctr
+fname = this_dat_name*"ctr_vars_turing.bson";
+@save fname dat_ctr sample_trajectory_noise_ctr sample_gradients_ctr turing_dat_ctr ctr_guess2
 
 # TODO: NN variables

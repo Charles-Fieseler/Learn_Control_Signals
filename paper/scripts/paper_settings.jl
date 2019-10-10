@@ -27,7 +27,9 @@ DAT_FOLDERNAME = BASE_FOLDERNAME*"paper\\dat\\"
 
   COLOR_DICT = Dict("true"=>:black, # Should be dashed
                 "data"=>:grey,
+                "data_uncontrolled"=>:grey,
                 "model_uncontrolled"=>:blue,
+                "model_partial"=>:teal,
                 "model_controlled"=>:purple,
                 "prediction"=>:black,
                 "intrinsic_true"=>:blue,

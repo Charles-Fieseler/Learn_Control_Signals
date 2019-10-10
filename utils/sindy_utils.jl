@@ -143,6 +143,12 @@ function get_nonzero_terms(model::sindyc_model; linear_indices=false)
     end
 end
 
+function get_nonzero_term_names(model::sindyc_model)
+    term_names = build_term_names(model)
+    term_ind = get_nonzero_terms(model; linear_indices=true)
+    return term_names[term_ind]
+end
+
 
 #####
 ##### Helper functions for nonlinear terms
@@ -312,4 +318,5 @@ end
 
 export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
-    build_dataframe, sindyc, print_equations, get_nonzero_terms
+    build_dataframe, sindyc, print_equations,
+    get_nonzero_terms, get_nonzero_term_names

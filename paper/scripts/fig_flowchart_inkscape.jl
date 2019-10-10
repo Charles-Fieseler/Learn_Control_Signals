@@ -17,8 +17,12 @@ fname = this_dat_name*"ode_vars.bson";
 @load fname dat dat_grad true_grad U_true
 
 # Bayesian variables 1: before control
-fname = this_dat_name*"naive_vars.bson";
-@load fname sindy_dat_unctr dat_unctr sample_trajectory_noise residual accepted_ind ctr_guess
+fname = this_dat_name*"naive_vars_sindy.bson";
+@load fname sindy_dat_unctr sindy_unctr
+
+# Bayesian variables 1: before control
+fname = this_dat_name*"naive_vars_bayes.bson";
+@load fname dat_unctr sample_trajectory_noise residual accepted_ind ctr_guess
 
 # SINDY variables 2: after control
 fname = this_dat_name*"ctr_vars_sindy.bson";

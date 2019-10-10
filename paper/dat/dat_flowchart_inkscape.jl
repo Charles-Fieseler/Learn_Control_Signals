@@ -184,7 +184,7 @@ i = 2
 accepted_ind = subsample_using_residual(residual,
             sample_trajectory_noise, min_length=4)
 
-num_pts = 300
+num_pts = 400
 start_ind = 101
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1]
 dat_sub = dat[:,subsample_ind]
@@ -241,9 +241,13 @@ turing_sub = convert_sindy_to_turing_enforce_zeros(sindy_sub;
                                 coef_noise_std=0.1)
 chain_sub = generate_chain(dat, numerical_grad, turing_sub,
                             train_ind=subsample_ind,
-                            iterations=200)[1]
+                            iterations=300)[1]
 turing_sub_sample = sindy_from_chain(sindy_sub, chain_sub,
                                         enforced_zeros=true)
+println("Turing sample equations")
+print_equations(turing_sub_sample)
+println("SINDy equations")
+print_equations(sindy_sub)
 # Generate test trajectories from the CORRECTED posterior
 sample_gradients3d_ctr, sample_noise_ctr =
             sample_sindy_posterior_grad(chain_sub,

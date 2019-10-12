@@ -25,6 +25,8 @@ end
 function calc_permutations(n, k)
     perms = []
     current_branches = collect(1:n)
+    if k==1; return current_branches; end
+    
     all_branches = nothing
     for i in 2:k
         tmp = copy(current_branches)

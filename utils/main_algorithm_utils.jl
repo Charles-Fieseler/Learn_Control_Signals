@@ -46,7 +46,7 @@ function calc_distribution_of_residuals(dat, numerical_grad, chain,
 
     # Calculate the residuals
     sample_gradients = transpose(drop_all_1dims(mean(sample_gradients3d, dims=1)))
-        sample_gradients_std = transpose(drop_all_1dims(std(sample_gradients3d, dims=1)))
+        # sample_gradients_std = transpose(drop_all_1dims(std(sample_gradients3d, dims=1)))
         sample_noise = mean(sample_noise2d)
     dat_grad = numerical_grad[:, sample_ind]
 

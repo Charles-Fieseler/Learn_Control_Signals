@@ -1,5 +1,7 @@
 
 """
+map_rows(f::Function, a::Array)
+
 Maps the function onto each row of the passed array
 """
 function map_rows(f::Function, a::Array)
@@ -12,8 +14,15 @@ function map_rows(f::Function, a::Array)
 end
 
 """
+generate_map_rows_function(f::Function, a::Array)
+
 Returns a function that applies the function-generating function 'f' to
     the rows of 'a', which can then be called with a SCALAR argument
+
+Example, where size(dat) == (3,1000), and ts==(time span)
+    F = generate_map_rows_function(
+                (x)->CubicSplineInterpolation(ts,x), dat)
+    F(0) # size()=(3,1); interpolation of the data at this time
 """
 function generate_map_rows_function(f::Function, a::Array)
     n = size(a,1)
@@ -28,6 +37,8 @@ function generate_map_rows_function(f::Function, a::Array)
 end
 
 """
+drop_all_1dims(a)
+
 Drops dimensions that are equal to one in multidimensional arrays
     from: https://stackoverflow.com/questions/46289554/drop-julia-array-dimensions-of-length-1
 """

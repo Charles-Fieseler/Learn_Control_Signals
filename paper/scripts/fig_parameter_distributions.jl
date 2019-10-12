@@ -17,12 +17,37 @@ fname = this_dat_name*"intermediate.bson";
 @load fname chain chain_sub
 # SINDy variables 1: before control
 fname = this_dat_name*"naive_vars_sindy.bson";
-@load fname sindy_unctr
+@load fname unctr_nz_terms unctr_nz_names
 # SINDY variables 2: after control
 fname = this_dat_name*"ctr_vars_sindy.bson";
-@load fname sindy_sub
+@load fname sub_nz_terms sub_nz_names
 
 #####
 ##### Plot
 #####
-get_nonzero_term_names()
+
+a = sample(chain[:noise], 1000)
+b = sample(chain_sub[:noise], 1000)
+
+histogram(Array.([a,b]), bar_width=0.5)
+
+histogram(a, bar_width=0.5)
+    histogram!(b)
+
+d1 = chain[:noise].value.data[:,1,1]
+plot_noise = histogram(d1, legend=false)
+d2 = chain_sub[:noise].value.data[:,1,1]
+width = plot_noise.series_list[1].plotattributes[:bar_width]
+histogram!(d2, legend=false, bar_width=width[1], nbins=1)
+
+
+plot_noise.series_list[1].plotattributes[:bar_width]
+
+
+plot_var = "all_coef[1]"
+
+# d1 = chain[var].value.data[:,1,1]
+plot_noise = density(chain[plot_var], legend=false)
+density!(chain_sub[plot_var], legend=false)
+
+mixeddensity(chain_sub)

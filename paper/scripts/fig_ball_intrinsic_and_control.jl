@@ -1,70 +1,84 @@
-using PkgSRA
-using Plots, Random
+using PkgSRA, Plots
+using Turing, AxisArrays, DataFrames
+using BSON: @load
 pyplot()
-Random.seed!(11)
-include("paper_settings.jl");
+
 
 #####
-##### Define the controlled dynamical system
+##### Load the data
 #####
-# Load example problem
-include(EXAMPLE_FOLDERNAME*"example_falling_ball.jl")
-U_starts = [6.0]
-    U_widths = 0.2;
-    amplitude = 50.0;
-U_func_kick(t, u) = U_func_time(t, u,
-                                U_widths, U_starts,
-                                F_dim=2,
-                                amplitude=amplitude)
+this_dat_name = DAT_FOLDERNAME*"dat_ball_"
 
-# Define the time dependent forcing function
+# Raw data
+fname = this_dat_name*"raw.bson";
+@load fname dat numerical_grad dyn_control_kick dyn_control_wall
 
-U_func_wall(X) = U_func_spring(X, k=1e3, r=1.0);
-# U_func_wall = spring_forcing_example(tspan)
+# Naive model
+fname = this_dat_name*"naive_model.bson";
+@load fname dat_naive naive_model
 
-
-# Solve the system
-dyn_with_ctr = solve_ball_system(U_func_space=U_func_wall,
-                                 U_func_time=U_func_kick)
-
-# plot(dyn_with_ctr)
-
-dat = Array(dyn_with_ctr)
-dyn_control_wall = zeros(size(dat))
-for i in 1:size(dat, 2)
-    dyn_control_wall[:,i] = U_func_wall(dat[:, i])
-end
-
-dyn_control_kick = zeros(size(dat))
-for (i, t) in enumerate(ts)
-    dyn_control_kick[:,i] = U_func_kick(t, dat[:, i])
-end
-
-# dyn_no_ctr = solve_ball_system()
+# Controlled model
+fname = this_dat_name*"controlled_model.bson";
+@load fname chain_ctr ctr_final
 
 #####
 ##### Produce the plots
 #####
+plot_opt = Dict(:titlefontsize=>48,
+        :xticks=>false, :yticks=>false, :fontfamily=>:serif,
+        :legendfontsize=>16, :titlefontsize=>24)
+
+## First figure in two panels: intrinsic dynamics
+
 # First: intrinsic dynamics
-plot_data = plot(ts, dyn_with_ctr[1,:], label="Height", lw=3, legend=:bottomright);
-    plot!(ts, dyn_with_ctr[2,:], label="Velocity", lw=3,
-            legendfontsize=14, xticks=false, yticks=false);
+plot_data = plot(ts, dat[1,:], label="Height", lw=5,
+                legend=:topleft);
+    plot!(ts, dat[2,:], label="Velocity", lw=5;
+    plot_opt...);
     xlabel!("");
-    title!("Observable Data", titlefontsize=24);
+    title!("Observable Data")
 
 # Second: Controller
 plot_control = plot(ts, vec(dyn_control_wall[2,:]), label="Ground",
                 color=COLOR_DICT["control_true"], lw=3);
-    plot_kick = plot!(ts, vec(dyn_control_kick[2,:]), label="Kick",
-                color=COLOR_DICT["control_time"], lw=3,
-                legendfontsize=14, xticks=false, yticks=false);
-    xlabel!("Time", fontsize=16, legend=:bottomright);
-    title!("Hidden Control Signals", titlefontsize=24);
+    plot!(ts, vec(dyn_control_kick[2,:]), label="Kick",
+            color=COLOR_DICT["data"], lw=3,
+            legendfontsize=14, xticks=false, yticks=false,
+            legend=:topright; plot_opt...);
+    xlabel!("Time", fontsize=24);
+    title!("Hidden Control Signals")
 
-# Creat the layout and plot
+# Create the layout and plot
 my_layout = @layout [p1; p2];
     p_final = plot(plot_data, plot_control, layout = my_layout)
 
 # Save
 fname = FIGURE_FOLDERNAME * "fig_ball_intrinsic_and_control.png";
 savefig(p_final, fname)
+
+
+
+## Second figure in three panels: Model dynamics
+
+# First, naive model dynamics
+plot_naive = plot(ts, dat[1,:], label="Data", lw=5,
+                color=COLOR_DICT["true"], legend=:topleft);
+    plot!(ts, dat_naive[1,:], label="Model", lw=5;
+        color=COLOR_DICT["model_uncontrolled"], plot_opt...);
+    xlabel!("");
+    title!("Naive Model")
+
+# Second, learned control signals
+plot_ctr = plot(ts, ctr_final[2,:], lw=5,
+                color=COLOR_DICT["control_time"], legend=false;
+                plot_opt...);
+    xlabel!("");
+    title!("Learned Controller")
+
+
+# Third, Reconstruction of controlled model
+plot_ctr = plot(ts, ctr_final[2,:], lw=5,
+                color=COLOR_DICT["control_time"], legend=false;
+                plot_opt...);
+    xlabel!("");
+    title!("Learned Controller")

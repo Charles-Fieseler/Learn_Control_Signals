@@ -310,7 +310,10 @@ fname = this_dat_name*"ode_vars.bson";
 
 # SINDy variables 1: before control
 fname = this_dat_name*"naive_vars_sindy.bson";
-@save fname sindy_dat_unctr sindy_unctr
+unctr_nz_terms = get_nonzero_terms(sindy_unctr)
+unctr_nz_names = get_nonzero_term_names(sindy_unctr)
+# NOTE: saving the SINDy model directly currently breaks BSON
+@save fname sindy_dat_unctr unctr_nz_terms unctr_nz_names #sindy_unctr
 
 # Bayesian variables 1: before control
 fname = this_dat_name*"naive_vars_bayes.bson";
@@ -318,7 +321,9 @@ fname = this_dat_name*"naive_vars_bayes.bson";
 
 # SINDY variables 2: after control
 fname = this_dat_name*"ctr_vars_sindy.bson";
-@save fname sindy_sub sindy_dat_ctr sindy_grad_ctr
+sub_nz_terms = get_nonzero_terms(sindy_sub)
+sub_nz_names = get_nonzero_term_names(sindy_sub)
+@save fname sindy_dat_ctr sindy_grad_ctr sub_nz_terms sub_nz_names #sindy_sub
 
 # Bayesian variables 2: after control
 fname = this_dat_name*"ctr_vars_turing.bson";

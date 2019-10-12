@@ -1,5 +1,5 @@
 using Distributions
-using StatsBase
+using StatsBase, Clustering
 
 #####
 ##### Helper functions
@@ -37,6 +37,13 @@ end
 ##### Ensemble testing functions
 #####
 """
+sindyc_ensemble(X, X_grad, library, val_list;
+                U=nothing,
+                selection_criterion=my_aic,
+                selection_dist=Normal(),
+                sparsification_mode="quantile",
+                use_clustering_minimization=false)
+
 Loop over several values of sparsity and choose the best model via
     MINIMIZING the 'selection_criterion' function
         selection_criterion() should have signature:
@@ -45,6 +52,7 @@ Loop over several values of sparsity and choose the best model via
     Also returns all the sparsity values and all the models
 """
 function sindyc_ensemble(X, X_grad, library, val_list;
+                U=nothing, ts=ts,
                 selection_criterion=my_aic,
                 selection_dist=Normal(),
                 sparsification_mode="quantile",
@@ -54,11 +62,11 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     all_criteria = zeros(n)
     # Convinience function
     make_model(x) = if sparsification_mode == "quantile"
-        sindyc(X, X_grad; library=library,
+        sindyc(X, X_grad, U; library=library,
                                 use_lasso=true,
                                 quantile_threshold=x)
     elseif sparsification_mode == "num_terms"
-        sindyc(X, X_grad; library=library,
+        sindyc(X, X_grad, U, ts; library=library,
                                 use_lasso=true,
                                 quantile_threshold=nothing,
                                 num_terms=x)

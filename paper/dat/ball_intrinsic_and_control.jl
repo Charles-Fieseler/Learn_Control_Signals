@@ -45,6 +45,8 @@ for (i, t) in enumerate(ts)
     dyn_control_kick[:,i] = U_func_kick(t, dat[:, i])
 end
 
+U_true = dyn_control_kick .+ dyn_control_wall
+
 #####
 ##### Fit a naive linear model (with constant)
 #####
@@ -75,11 +77,11 @@ chain_unctr, best_sindy_unctr = calc_distribution_of_models(
 ctr_guess = process_residual(residual_unctr, sample_noise)
 
 # U_true = vcat(dyn_control_kick, dyn_control_wall)
-# ind = 1:500
-# i = 2
-#     plot(residual_unctr[i,ind], ribbon=sample_noise)
-#     plot!(U_true[:,ind]', label="True")
-#     title!("Residual and true control")
+ind = 1:500
+i = 2
+    plot(residual_unctr[i,ind], ribbon=sample_noise)
+    plot!(U_true[:,ind]', label="True")
+    title!("Residual and true control")
 
 ## Subsample
 accepted_ind = subsample_using_residual(
@@ -88,26 +90,27 @@ accepted_ind = subsample_using_residual(
 num_pts = 400; start_ind = 101
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1]
 
-# U_sub = U_true[:,subsample_ind]
-# plot(U_sub')
-#     # plot!(residual[:,subsample_ind]', ribbon=sample_trajectory_noise)
-#     title!("Control signals in the subsampled dataset")
+U_sub = U_true[:,subsample_ind]
+plot(U_sub')
+    # plot!(residual[:,subsample_ind]', ribbon=sample_trajectory_noise)
+    title!("Control signals in the subsampled dataset")
 
 chain_ctr, best_sindy_ctr = calc_distribution_of_models(
     dat[:,subsample_ind],
     numerical_grad[:,subsample_ind],
     sindy_library,
     val_list = calc_permutations(3,2),
-    chain_opt = (iterations=200, train_ind=1:num_pts)
+    chain_opt = (iterations=300, train_ind=1:num_pts)
 )
 
 # print_equations(best_sindy_ctr)
 # plot(chain_ctr)
 
 # Calculate updated control signal
-(residual_ctr, ctr_final, _, _, _) =
+(residual_ctr, _, noise_ctr, _) =
         calc_distribution_of_residuals(
         dat, numerical_grad, chain_ctr, 1:length(ts), best_sindy_ctr)
+ctr_final = process_residual(residual_ctr, noise_ctr)
 
 plot(ctr_final', label="Learned", lw=3, color=:black)
     plot!(U_true', label="True")
@@ -123,14 +126,11 @@ val_list = calc_permutations(3,2)
                      use_clustering_minimization=false)
 
 scatter(sum.(val_list), all_criteria)
-F = generate_map_rows_function(
-        (d)->LinearInterpolation(ts,d), ctr_final)
-# plot(vcat.(F.(ts)...))
-# F(0)
-f(u,p,t) = final_sindy_model(u) .+ F(t)
+
 prob = ODEProblem(final_sindy_model, dat[:,1], tspan)
 # ts2 = range(tspan[1], tspan[end], length=10000)
-sol = solve(prob, Tsit5(), saveat=ts)
+dt = ts[2] - ts[1]
+sol = solve(prob, AB3(), dt=dt, saveat=ts)
 dat_final = Array(sol)
 
 plot(sol)
@@ -149,4 +149,4 @@ fname = this_dat_name*"naive_model.bson";
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@save fname chain_ctr ctr_final
+@save fname chain_ctr ctr_final dat_final

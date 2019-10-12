@@ -19,7 +19,7 @@ fname = this_dat_name*"naive_model.bson";
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@load fname chain_ctr ctr_final
+@load fname chain_ctr ctr_final dat_final
 
 #####
 ##### Produce the plots
@@ -61,10 +61,10 @@ savefig(p_final, fname)
 ## Second figure in three panels: Model dynamics
 
 # First, naive model dynamics
-plot_naive = plot(ts, dat[1,:], label="Data", lw=5,
-                color=COLOR_DICT["true"], legend=:topleft);
-    plot!(ts, dat_naive[1,:], label="Model", lw=5;
-        color=COLOR_DICT["model_uncontrolled"], plot_opt...);
+plot_naive = plot(ts, dat_naive[1,:], lw=5,
+                legend=:topright);
+    plot!(ts, dat_naive[2,:], legend=false, lw=5;
+        plot_opt...);
     xlabel!("");
     title!("Naive Model")
 
@@ -77,8 +77,17 @@ plot_ctr = plot(ts, ctr_final[2,:], lw=5,
 
 
 # Third, Reconstruction of controlled model
-plot_ctr = plot(ts, ctr_final[2,:], lw=5,
-                color=COLOR_DICT["control_time"], legend=false;
+plot_final = plot(ts, dat_final', lw=5,
+                # color=COLOR_DICT["model_controlled"],
+                legend=false;
                 plot_opt...);
-    xlabel!("");
-    title!("Learned Controller")
+    xlabel!("Time", guidefontsize=18);
+    title!("Controlled Model")
+
+# Create the layout and plot
+my_layout = @layout [plot_naive; plot_ctr; plot_final];
+    p_final = plot(plot_naive, plot_ctr, plot_final, layout = my_layout)
+
+# Save
+fname = FIGURE_FOLDERNAME * "fig_ball_model.png";
+savefig(p_final, fname)

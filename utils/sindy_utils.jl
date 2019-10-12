@@ -37,7 +37,10 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
         X_grad = numerical_derivative(X)
     end
     if ts == nothing
-        ts = 1:size(X,1)
+        ts = range(0, 1, length=size(X,2))
+        if size(U,1) > 1
+            @warn("Multidimensional control signals may not work")
+        end
     end
 
     # Get a model with the augmented data
@@ -87,7 +90,9 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                             library, var_names)
     else
         # TODO: make U_func work with multiple channels
-        U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
+        # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
+        U_func = generate_map_rows_function(
+                (d)->CubicSplineInterpolation(ts,d), U)
         model = sindyc_model(A, B, U, U_func,
                             library, var_names )
     end
@@ -144,9 +149,17 @@ function get_nonzero_terms(model::sindyc_model; linear_indices=false)
 end
 
 function get_nonzero_term_names(model::sindyc_model)
-    term_names = build_term_names(model)
-    term_ind = get_nonzero_terms(model; linear_indices=true)
-    return term_names[term_ind]
+    rhs_names = build_term_names(model)
+    term_ind = get_nonzero_terms(model)
+    lhs_names = model.variable_names
+    final_term_names = ones(String, size(term_ind))
+    for (i, mat_ind) in enumerate(term_ind)
+        lhs_var, rhs_var = Tuple(mat_ind)
+        lhs = lhs_names[lhs_var]
+        rhs = rhs_names[rhs_var]
+        final_term_names[i] = "d$(lhs)dt_$rhs"
+    end
+    return final_term_names
 end
 
 
@@ -319,4 +332,4 @@ end
 export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
     build_dataframe, sindyc, print_equations,
-    get_nonzero_terms, get_nonzero_term_names
+    get_nonzero_terms, get_nonzero_term_names, build_term_names

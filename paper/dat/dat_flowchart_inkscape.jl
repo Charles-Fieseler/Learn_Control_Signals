@@ -44,16 +44,6 @@ true_grad_raw = zeros(size(dat))
 for i in 1:size(dat,2)
     true_grad_raw[:,i] = lorenz_system(dat_raw[:,i], Float64.(p), [0])
 end
-# dat_raw += 0.1*randn(size(dat_raw))
-#
-# val_list = calc_permutations(5,3)
-# (best_model_raw,best_criterion,all_criteria,all_models) =
-#     sindyc_ensemble(dat_raw, true_grad_raw, sindy_library, val_list,
-#                     selection_criterion=my_aicc,
-#                     sparsification_mode="num_terms",
-#                     selection_dist=Normal(0.0,20))
-# print_equations(best_model_raw)
-# scatter(sum.(val_list), all_criteria)
 
 # Controlled; true variables
 true_grad = zeros(size(dat))

@@ -9,44 +9,40 @@ pyplot()
 #####
 this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 
-# Raw data
-fname = this_dat_name*"raw.bson";
-@load fname dat true_grad numerical_grad
-
-# Controlled model
+## Constant input
 fname = this_dat_name*"controlled_model.bson";
-@load fname ctr_final
+@load fname chain_ctr
 
 ## Spikes with varying input
-# Raw data
-fname = this_dat_name*"raw2.bson";
-@load fname dat2 grad_true2 numerical_grad2
-
-# Controlled model
 fname = this_dat_name*"controlled_model2.bson";
-@load fname ctr_final2
+@load fname chain_ctr2
 
 #####
 ##### Produce the plots
 #####
 plot_opt = Dict(:titlefontsize=>24,
         :yticks=>false, :fontfamily=>:serif,
-        :legendfontsize=>16)
+        :legendfontsize=>16, :guidefontsize=>16,
+        :xtickfontsize=>16)
 
-## Part 1: no external control changes
-# Two panels: data, then control
-plot_data = plot(ts, dat[1,:], lw=5,
-                color=COLOR_DICT["data"],
-                legend=false, xticks=false;
-                plot_opt...);
-    xlabel!("");
-    title!("Neuron With Constant Input ")
+# Plot
+key = "all_coef[1]"
+plot1 = density(chain_ctr[key], label="Constant Input", lw=3; plot_opt...)
+        density!(chain_ctr2[key], label="Variable Input", lw=3)
+        vline!([5], lw=3, color=:black, label="True value", legend=true)
+        title!("Coefficient for v")
 
-# Second: Controller
-plot_control = plot(ts, ctr_final[1,:], legend=false,
-                color=COLOR_DICT["control_time"], lw=3; plot_opt...);
-    xlabel!("Time", guidefontsize=14, tickfontsize=14);
-    title!("Learned Controller")
+key = "all_coef[5]"
+plot2 = density(chain_ctr[key], lw=3; plot_opt...)
+        density!(chain_ctr2[key], lw=3)
+        vline!([180], lw=3, color=:black)
+        title!("Constant Term")
+
+key = "all_coef[7]"
+plot3 = density(chain_ctr[key], lw=3; plot_opt...)
+        density!(chain_ctr2[key], lw=3)
+        vline!([0.04], lw=3, color=:black)
+        title!("Coefficient for v^2")
 
 # Create the layout and plot
 my_layout = @layout [p1; p2];

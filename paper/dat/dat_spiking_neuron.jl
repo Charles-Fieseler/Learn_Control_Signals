@@ -48,6 +48,15 @@ dyn_with_spikes = solve_neuron_system(U_func_time=U_func_total)
 plot(dyn_with_spikes)
 dat2 = Array(dyn_with_spikes)
 
+grad_true2 = dyn_with_spikes(ts, Val{1})
+numerical_grad2 = numerical_derivative(dat2, ts)
+
+U_true2 = hcat(U_func_total.(ts)...)
+
+
+
+
+
 #####
 ##### First panels: Remove the control signal and fit a controlled model
 #####
@@ -74,12 +83,7 @@ i = 2
     plot!(numerical_grad[i,ind], label="data")
     title!("Data and model for channel $i")
 
-## Subsample
-# partial_accepted_ind = abs.(residual_unctr) .< (500*sample_noise)
-# partial_accepted_ind = vec(prod(Int.(partial_accepted_ind), dims=1))
-# _, _, all_starts, all_ends = calc_contiguous_blocks(
-#           partial_accepted_ind,
-#           minimum_length=1)
+
 
 start_of_subsample = 1001
 accepted_ind = subsample_using_residual(
@@ -133,76 +137,55 @@ ctr_final = process_residual(residual_ctr, 100*noise_ctr)
 plot(ctr_final', label="Learned", lw=3, color=:black)
     plot!(U_true', label="True")
 
-# Get the actually controlled model
-# val_list = calc_permutations(5,2)
-# (final_sindy_model,best_criterion,all_criteria,_, _) =
-#      sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
-#                      U=ctr_final, ts=ts,
-#                      selection_criterion=my_aicc,
-#                      sparsification_mode="num_terms",
-#                      selection_dist=Normal(0,1),
-#                      use_clustering_minimization=false)
-
-# scatter(sum.(val_list), all_criteria)
-#
-# prob = ODEProblem(final_sindy_model, dat[:,1], tspan)
-# # ts2 = range(tspan[1], tspan[end], length=10000)
-# dt = ts[2] - ts[1]
-# sol = solve(prob, AB3(), dt=dt, saveat=ts)
-# dat_final = Array(sol)
-#
-# plot(sol)
-
 
 
 
 #####
 ##### Second panels: nonlinearity as well as control
 #####
-sindy_library = Dict("cross_terms"=>2, "constant"=>nothing);
 chain_unctr2, best_sindy_unctr2 = calc_distribution_of_models(
     dat2, numerical_grad2, sindy_library,
-    val_list = calc_permutations(3,2)
+    val_list = calc_permutations(5,2)
 )
 
-plot(chain_unctr)
+plot(chain_unctr2)
 ## Get the posterior distribution
-(residual_unctr, sample_gradients, sample_noise, dat_grad) =
+(residual_unctr2, sample_gradients2, sample_noise2, dat_grad2) =
         calc_distribution_of_residuals(
-        dat, numerical_grad, chain_unctr, 1:length(ts), best_sindy_unctr)
-ctr_guess = process_residual(residual_unctr, sample_noise)
+        dat2, grad_true2, chain_unctr2, 1:length(ts), best_sindy_unctr2)
+# ctr_guess2 = process_residual(residual_unctr2, sample_noise2)
 
-# ind = 1:5000
-# i = 1
-#     plot(residual_unctr[i,ind], ribbon=500*sample_noise)
-#     plot!(U_true[:,ind]', label="True")
-#     title!("Residual and true control for channel $i")
-# i = 2
-#     plot(sample_gradients[i,ind], label="model", lw=2)
-#     plot!(numerical_grad[i,ind], label="data")
-#     title!("Data and model for channel $i")
+ind = 1:5000
+i = 1
+    plot(residual_unctr2[i,ind], ribbon=500*sample_noise2)
+    plot!(U_true2[:,ind]', label="True")
+    title!("Residual and true control for channel $i")
+i = 1
+    plot(sample_gradients2[i,ind], label="model", lw=2)
+    plot!(numerical_grad2[i,ind], label="data")
+    title!("Data and model for channel $i")
 
 start_of_subsample = 1001
 accepted_ind = subsample_using_residual(
-            residual_unctr[:,start_of_subsample:end], sample_noise,
+            residual_unctr2[:,start_of_subsample:end], sample_noise2,
             noise_factor=500,
             min_length=10, shorten_length=2)
 num_pts = 2000; start_ind = 101
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1] .+ start_of_subsample
 
-U_sub = U_true[:,subsample_ind]
-plot(U_sub')
+U_sub2 = U_true2[:,subsample_ind]
+plot(U_sub2')
     # plot!(residual[:,subsample_ind]', ribbon=sample_trajectory_noise)
     title!("Control signals in the subsampled dataset")
 i = 2
-    plot(subsample_ind,sample_gradients[i,subsample_ind], label="model", lw=2)
-    plot!(subsample_ind,numerical_grad[i,subsample_ind], label="data")
+    plot(subsample_ind,sample_gradients2[i,subsample_ind], label="model", lw=2)
+    plot!(subsample_ind,numerical_grad2[i,subsample_ind], label="data")
     title!("Data and model for channel $i")
 
 val_list = calc_permutations(5,2)
-(final_sindy_model,best_criterion,all_criteria,_, _) =
-     sindyc_ensemble(dat[:,subsample_ind],
-                     numerical_grad[:, subsample_ind],
+(final_sindy_model2,best_criterion2,all_criteria2,_, _) =
+     sindyc_ensemble(dat2[:,subsample_ind],
+                     numerical_grad2[:, subsample_ind],
                      sindy_library, val_list,
                      selection_criterion=my_aicc,
                      sparsification_mode="num_terms",

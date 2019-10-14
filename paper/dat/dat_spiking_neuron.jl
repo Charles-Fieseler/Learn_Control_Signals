@@ -1,5 +1,6 @@
 using PkgSRA
 using Plots, Random, Distributions, Interpolations
+using StatsBase
 pyplot()
 Random.seed!(11)
 using BSON: @save
@@ -140,12 +141,50 @@ plot(ctr_final', label="Learned", lw=3, color=:black)
 
 
 
+
+
 #####
 ##### Second panels: nonlinearity as well as control
 #####
+
+# Initially, randomly subsample the data
+initial_subsamples = []
+num_pts = 400;
+for i in 1:10
+    push!(initial_subsamples, randperm(length(ts))[1:num_pts])
+end
+
+# Just do SINDY here, not Turing yet
+val_list = calc_permutations(5,2)
+sz = size(initial_subsamples)
+all_final_models2 = Vector{sindyc_model}(undef,sz)
+all_best_criteria2 = zeros(sz)
+all_errL2 = zeros(sz)
+all_all_criteria2 = Vector{Vector}(undef,sz)
+for (i, inds) in enumerate(initial_subsamples)
+    (all_final_models2[i],all_best_criteria2[i],all_all_criteria2[i],_, _) =
+         sindyc_ensemble(dat2[:,inds],
+                         numerical_grad2[:, inds],
+                         sindy_library, val_list,
+                         selection_criterion=my_aicc,
+                         sparsification_mode="num_terms",
+                         selection_dist=Normal(0,10),
+                         use_clustering_minimization=true)
+    # Calculate full L2 error
+    this_dat = all_final_models2[i](dat2, 0)
+    all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+end
+
+# Choose the best of the above models and subsamples
+min_err, tmp_ind = findmin(all_errL2)
+best_initial_subsample = initial_subsamples[tmp_ind]
+
+# Choose the best of the above models, and now start Turing
 chain_unctr2, best_sindy_unctr2 = calc_distribution_of_models(
-    dat2, numerical_grad2, sindy_library,
-    val_list = calc_permutations(5,2)
+    dat2[:,best_initial_subsample],
+    numerical_grad2[:,best_initial_subsample], sindy_library,
+    val_list = calc_permutations(5,2),
+    chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
 plot(chain_unctr2)

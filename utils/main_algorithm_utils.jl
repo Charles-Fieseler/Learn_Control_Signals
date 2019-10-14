@@ -86,6 +86,12 @@ end
 
 """
 Step 3: Subsample the data using the residuals
+
+function subsample_using_residual(residual, noise;
+                                  noise_factor=1.0,
+                                  min_length=1,
+                                  shorten_length=1)
+return accepted_ind
 """
 function subsample_using_residual(residual, noise;
                                   noise_factor=1.0,
@@ -108,6 +114,61 @@ end
 
 
 
+"""
+Optional step 0: Randomly subsample the initial data (for the naive model)
+
+calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
+                                    num_pts=400,
+                                    num_subsamples=10,
+                                    val_list=calc_permutations(5,2))
+return (best_initial_subsample=best_initial_subsample,
+        best_model=all_final_models2[tmp_ind],
+        all_initial_subsamples=initial_subsamples,
+        all_errL2=all_errL2)
+"""
+function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
+                                    num_pts=400,
+                                    num_subsamples=10,
+                                    val_list=calc_permutations(5,2))
+    # Initially, randomly subsample the data
+    initial_subsamples = []
+    for i in 1:num_subsamples
+        push!(initial_subsamples, randperm(length(ts))[1:num_pts])
+    end
+
+    # Just do SINDY here, not Turing yet
+    sz = size(initial_subsamples)
+    all_final_models2 = Vector{sindyc_model}(undef,sz)
+    all_errL2 = zeros(sz)
+    for (i, inds) in enumerate(initial_subsamples)
+        (all_final_models2[i],_,_,_, _) =
+             sindyc_ensemble(dat2[:,inds],
+                             numerical_grad2[:, inds],
+                             sindy_library, val_list,
+                             selection_criterion=my_aicc,
+                             sparsification_mode="num_terms",
+                             selection_dist=Normal(0,10),
+                             use_clustering_minimization=true)
+        # Calculate full L2 error
+        this_dat = all_final_models2[i](dat2, 0)
+        all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+    end
+
+    # Choose the best of the above models and subsamples
+    min_err, tmp_ind = findmin(all_errL2)
+    best_initial_subsample = initial_subsamples[tmp_ind]
+
+    return (best_initial_subsample=best_initial_subsample,
+            best_model=all_final_models2[tmp_ind],
+            all_initial_subsamples=initial_subsamples,
+            all_errL2=all_errL2)
+end
+
+
+#####
+#####
+#####
 export calc_distribution_of_models,
         calc_distribution_of_residuals,
-        subsample_using_residual
+        subsample_using_residual,
+        calc_best_random_subsample

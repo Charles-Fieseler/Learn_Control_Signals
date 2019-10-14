@@ -147,10 +147,11 @@ plot(ctr_final', label="Learned", lw=3, color=:black)
 ##### Second panels: nonlinearity as well as control
 #####
 
+num_pts = 200;
 sindy_library = Dict("cross_terms"=>2, "constant"=>nothing);
 best_initial_subsample = calc_best_random_subsample(
     dat2, numerical_grad2, sindy_library;
-    num_pts=400,
+    num_pts=num_pts,
     num_subsamples=10,
     val_list=calc_permutations(5,2)
 )[1]
@@ -163,7 +164,7 @@ chain_unctr2, best_sindy_unctr2 = calc_distribution_of_models(
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
-plot(chain_unctr2)
+plot(chain_unctr2[:noise])
 ## Get the posterior distribution
 (residual_unctr2, sample_gradients2, sample_noise2, dat_grad2) =
         calc_distribution_of_residuals(
@@ -234,19 +235,30 @@ plot(ctr_final', label="Learned", lw=3, color=:black)
 
 
 
+
+
+
+
 #####
 ##### Save
 #####
 this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 
+## Basic spiking model
 # Raw data
 fname = this_dat_name*"raw.bson";
-@save fname dat true_grad numerical_grad dyn_with_ctr
-
-# Naive model
-# fname = this_dat_name*"naive_model.bson";
-# @save fname dat_naive naive_model
+@save fname dat true_grad numerical_grad dyn_with_ctr U_true
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
 @save fname chain_ctr ctr_final best_sindy_ctr
+
+
+## Spikes with varying input
+# Raw data
+fname = this_dat_name*"raw2.bson";
+@save fname dat2 true_grad2 numerical_grad2 dyn_with_ctr2 U_true2
+
+# Controlled model
+fname = this_dat_name*"controlled_model2.bson";
+@save fname chain_ctr2 ctr_final2 best_sindy_ctr2

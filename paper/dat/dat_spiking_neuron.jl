@@ -1,6 +1,6 @@
 using PkgSRA
 using Plots, Random, Distributions, Interpolations
-using StatsBase
+using StatsBase, StatsPlots
 pyplot()
 Random.seed!(11)
 using BSON: @save
@@ -171,10 +171,11 @@ plot(chain_unctr2[:noise])
         dat2, grad_true2, chain_unctr2, 1:length(ts), best_sindy_unctr2)
 # ctr_guess2 = process_residual(residual_unctr2, sample_noise2)
 
-ind = 1:5000
+ind = 3200:4200
 i = 1
-    plot(residual_unctr2[i,ind], ribbon=500*sample_noise2)
+    plot(residual_unctr2[i,ind], ribbon=1*sample_noise2)
     plot!(U_true2[:,ind]', label="True")
+    ylims!(-400, 400)
     title!("Residual and true control for channel $i")
 i = 1
     plot(sample_gradients2[i,ind], label="model", lw=2)
@@ -184,7 +185,7 @@ i = 1
 start_of_subsample = 1001
 accepted_ind = subsample_using_residual(
             residual_unctr2[:,start_of_subsample:end], sample_noise2,
-            noise_factor=500,
+            noise_factor=1,
             min_length=10, shorten_length=2)
 num_pts = 2000; start_ind = 101
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1] .+ start_of_subsample
@@ -207,33 +208,34 @@ val_list = calc_permutations(5,2)
                      sparsification_mode="num_terms",
                      selection_dist=Normal(0,10),
                      use_clustering_minimization=true)
-print_equations(final_sindy_model)
+println("Model")
+print_equations(final_sindy_model2)
+println("True equations")
+print_equations(core_dyn_true)
 scatter(sum.(val_list), all_criteria)
 
 
-chain_ctr, best_sindy_ctr = calc_distribution_of_models(
-    dat[:,subsample_ind],
-    numerical_grad[:,subsample_ind],
+chain_ctr2, best_sindy_ctr2 = calc_distribution_of_models(
+    dat2[:,subsample_ind],
+    numerical_grad2[:,subsample_ind],
     sindy_library,
     val_list = calc_permutations(4,2),
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
-print_equations(best_sindy_ctr)
+print_equations(best_sindy_ctr2)
 # sindy_sample =  sindy_from_chain(best_sindy_ctr, chain_ctr)
-# plot(chain_ctr)
+plot(chain_ctr2)
 
 # Calculate updated control signal
-(residual_ctr, _, noise_ctr, _) =
+(residual_ctr2, _, noise_ctr2, _) =
         calc_distribution_of_residuals(
-                dat, grad_true, chain_ctr,
-                1:length(ts), best_sindy_ctr)
-ctr_final = process_residual(residual_ctr, 100*noise_ctr)
+                dat2, grad_true2, chain_ctr2,
+                1:length(ts), best_sindy_ctr2)
+ctr_final2 = process_residual(residual_ctr2, 1*noise_ctr2)
 
-plot(ctr_final', label="Learned", lw=3, color=:black)
-    plot!(U_true', label="True")
-
-
+plot(ctr_final2', label="Learned", lw=3, color=:black)
+    plot!(U_true2', label="True")
 
 
 
@@ -247,7 +249,7 @@ this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 ## Basic spiking model
 # Raw data
 fname = this_dat_name*"raw.bson";
-@save fname dat true_grad numerical_grad dyn_with_ctr U_true
+@save fname dat grad_true numerical_grad dyn_with_ctr U_true
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
@@ -257,8 +259,8 @@ fname = this_dat_name*"controlled_model.bson";
 ## Spikes with varying input
 # Raw data
 fname = this_dat_name*"raw2.bson";
-@save fname dat2 true_grad2 numerical_grad2 dyn_with_ctr2 U_true2
+@save fname dat2 grad_true2 numerical_grad2 dyn_with_spikes U_true2
 
 # Controlled model
 fname = this_dat_name*"controlled_model2.bson";
-@save fname chain_ctr2 ctr_final2 best_sindy_ctr2
+@save fname chain_ctr2 ctr_final2 #best_sindy_ctr2

@@ -1,5 +1,5 @@
 using PkgSRA, Plots
-using Turing, AxisArrays, DataFrames
+using Turing, AxisArrays, DataFrames, LinearAlgebra, DataStructures
 using BSON: @load
 pyplot()
 
@@ -11,21 +11,20 @@ this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 
 # Raw data
 fname = this_dat_name*"raw.bson";
-@save fname dat true_grad numerical_grad
+@load fname dat true_grad numerical_grad
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@save fname ctr_final
+@load fname ctr_final
 
 ## Spikes with varying input
 # Raw data
 fname = this_dat_name*"raw2.bson";
-@save fname dat2 true_grad2 numerical_grad2
+@load fname dat2 grad_true2 numerical_grad2
 
 # Controlled model
 fname = this_dat_name*"controlled_model2.bson";
-@save fname ctr_final2
-
+@load fname ctr_final2
 
 #####
 ##### Produce the plots
@@ -41,7 +40,7 @@ plot_data = plot(ts, dat[1,:], lw=5,
                 legend=false, xticks=false;
                 plot_opt...);
     xlabel!("");
-    title!("Spiking Neuron")
+    title!("Neuron With Constant Input ")
 
 # Second: Controller
 plot_control = plot(ts, ctr_final[1,:], legend=false,
@@ -58,20 +57,44 @@ fname = FIGURE_FOLDERNAME * "fig_neuron.png";
 savefig(p_final, fname)
 
 
+##
+##
 ## Part 2: with external control changes
 plot_data2 = plot(ts, dat2[1,:], lw=5,
                 color=COLOR_DICT["data"],
                 legend=false, xticks=false;
                 plot_opt...);
     xlabel!("");
-    title!("Spiking Neuron")
+    title!("Neuron With Varying Input")
 
 # Second: Learned and true Controller
+inset_ind = 3200:4200; # Chosen by hand
+
 plot_control2 = plot(ts, ctr_final2[1,:], legend=false,
                 color=COLOR_DICT["control_time"], lw=3; plot_opt...);
     xlabel!("Time", guidefontsize=14, tickfontsize=14);
     title!("Learned Controller")
+    plot!([ts[inset_ind[1]], ts[inset_ind[1]]],
+        [-1000, 1000], color=:black, lw=3)
+    plot!([ts[inset_ind[end]], ts[inset_ind[end]]],
+        [-1000, 1000], color=:black, lw=3)
+
+# Create what will be an inset
+plot_inset = plot(U_true2[1,inset_ind], lw=5,
+                    color=COLOR_DICT["control_true"], # label="True",
+                    xticks=false,
+                    legendfontsize=48, legend=false) #legend=:bottomleft)
+    plot!(ctr_final2[1,inset_ind], lw=5,# label="Learned",
+        color=COLOR_DICT["control_time"],
+        ylims=[-100, 300]; plot_opt...)
 
 # Create the layout and plot
 my_layout = @layout [p1; p2];
-    p_final = plot(plot_data2, plot_control2, layout = my_layout)
+    p_final2 = plot(plot_data2, plot_control2, layout = my_layout)
+
+# Save
+fname = FIGURE_FOLDERNAME * "fig_neuron2.png";
+savefig(p_final2, fname)
+
+fname = FIGURE_FOLDERNAME * "fig_neuron_inset.png";
+savefig(plot_inset, fname)

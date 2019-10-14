@@ -1,4 +1,4 @@
-using PkgSRA, Plots
+using PkgSRA, Plots, StatsPlots
 using Turing, AxisArrays, DataFrames, LinearAlgebra, DataStructures
 using BSON: @load
 pyplot()
@@ -9,18 +9,19 @@ pyplot()
 #####
 this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 
+## Basic spiking model
 # Raw data
 fname = this_dat_name*"raw.bson";
-@load fname dat true_grad numerical_grad
+@load fname dat grad_true numerical_grad U_true
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@load fname ctr_final
+@load fname ctr_final 
 
 ## Spikes with varying input
 # Raw data
 fname = this_dat_name*"raw2.bson";
-@load fname dat2 grad_true2 numerical_grad2
+@load fname dat2 grad_true2 numerical_grad2 U_true2
 
 # Controlled model
 fname = this_dat_name*"controlled_model2.bson";
@@ -33,7 +34,7 @@ plot_opt = Dict(:titlefontsize=>24,
         :yticks=>false, :fontfamily=>:serif,
         :legendfontsize=>16)
 
-## Part 1: no external control changes
+## Two density plots
 # Two panels: data, then control
 plot_data = plot(ts, dat[1,:], lw=5,
                 color=COLOR_DICT["data"],

@@ -249,17 +249,17 @@ this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 ## Basic spiking model
 # Raw data
 fname = this_dat_name*"raw.bson";
-@save fname dat grad_true numerical_grad dyn_with_ctr U_true
+@save fname dat grad_true numerical_grad dyn_with_ctr U_true chain_unctr
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@save fname chain_ctr ctr_final best_sindy_ctr
+@save fname chain_ctr ctr_final #best_sindy_ctr
 
 
 ## Spikes with varying input
 # Raw data
 fname = this_dat_name*"raw2.bson";
-@save fname dat2 grad_true2 numerical_grad2 dyn_with_spikes U_true2
+@save fname dat2 grad_true2 numerical_grad2 dyn_with_spikes U_true2 chain_unctr2
 
 # Controlled model
 fname = this_dat_name*"controlled_model2.bson";

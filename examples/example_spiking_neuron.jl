@@ -10,15 +10,18 @@ Simple model of a spiking neuron, from the paper:
 function neuron_system(du, u, p, t;
                      U_func_time=U_func_time_trivial,
                      U_func_space=U_func_space_trivial)
-    a, b = p
-    v, u = u
-
     Ft = U_func_time(t)
     Fs = U_func_space(u)
+    a, b = p
+    v, u_var = u
 
-    du[1] = 0.04*(v^2) + 5*v + 140 - u
-    du[2] = a*(b*v - u)
-    du .+= Ft .+ Fs
+    du[1] = 0.04*(v^2) + 5*v + 140 - u_var
+    du[2] = a*(b*v - u_var)
+    # TODO: Why is this breaking?
+    # du .+= Ft .+ Fs
+    tmp = Ft .+ Fs
+    du[1] += tmp[1]
+    du[2] += tmp[2]
 end
 
 
@@ -51,7 +54,6 @@ end
 #####
 ##### Turing function for Bayesian parameter estimation
 #####
-
 # Unforced version for use with Turing.jl
 function neuron_system(u, p, t)
     u = convert.(eltype(p),u)
@@ -62,41 +64,22 @@ function neuron_system(u, p, t)
     return du
 end
 
-# @model lorenz_grad_residual(y, dat) = begin
-#     # Lorenz parameters
-#     ρ ~ Normal(10, 10.0)
-#     σ ~ Normal(10, 1.0)
-#     β ~ Normal(5, 1.0)
-#     params = [ρ, σ, β]
-#     noise ~ Truncated(Normal(5, 5.0), 0, 20)
-#
-#     t = [0] # Not time dependent
-#     for i in 1:size(y,2)
-#         u = dat[:,i]
-#         du_params = lorenz_system(u, params, t)
-#         y[:, i] ~ MvNormal(du_params, [noise, noise, noise])
-#     end
-# end;
-
-
 #####
 ##### True model in SINDy syntax
 #####
-# r, s, b = p
-# #      x  y z  c xx xy xz yy yz zz
-#  A = [[-s s 0  0  0  0  0  0  0  0];
-#       [r -1 0  0  0  0 -1  0  0  0];
-#       [0 0 -b  0  0  1  0  0  0  0]]
-# n = size(A, 1)
-# sindy_library = Dict(
-#     "cross_terms"=>2,
-#     "constant"=>nothing
-# );
-# core_dyn_true = sindyc_model(A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
-#                             convert_string2function(sindy_library),
-#                             ["x", "y", "z"])
+a, b = p
+#      x    y  c   xx    xy yy
+ A = [[5   -1  140  0.04  0  0];
+      [a*b -a  0    0     0  0]]
+n = size(A, 1)
+sindy_library = Dict(
+    "cross_terms"=>2,
+    "constant"=>nothing
+);
+core_dyn_true = sindyc_model(A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
+                            convert_string2function(sindy_library),
+                            ["x", "y"])
 
 # Actually export
-export ts, solve_neuron_system, neuron_system
-    # , core_dyn_true,
-    # lorenz_grad_residual
+export ts, solve_neuron_system, neuron_system, core_dyn_true
+    # ,lorenz_grad_residual

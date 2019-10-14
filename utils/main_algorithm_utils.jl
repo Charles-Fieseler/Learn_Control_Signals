@@ -3,6 +3,20 @@ using PkgSRA
 
 """
 Steps 1 and 3: fit a distribution of models
+
+calc_distribution_of_models(dat,
+                             numerical_grad,
+                             sindy_library;
+                             U=nothing,
+                             selection_dist=Normal(0,10),
+                             use_clustering_minimization=false,
+                             chain_opt=(iterations=200,
+                                        num_training_pts=100,
+                                        start_ind=101),
+                             val_list=calc_permutations(5,2))
+
+Returns both the Turing chain and the sindyc_model used as the
+        priors for the coefficients.
 """
 function calc_distribution_of_models(dat,
                                      numerical_grad,
@@ -37,6 +51,16 @@ end
 
 """
 Step 2: Get the distribution of residuals
+
+calc_distribution_of_residuals(dat, numerical_grad, chain,
+                                sample_ind,
+                                sindy_template)
+
+Returns:
+        residual
+        sample_gradients
+        sample_noise
+        dat_grad
 """
 function calc_distribution_of_residuals(dat, numerical_grad, chain,
                                         sample_ind,

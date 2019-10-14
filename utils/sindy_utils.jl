@@ -104,6 +104,9 @@ end
 ##### Helper functions for pretty printing
 #####
 """
+print_equations(model::sindyc_model;
+                     var_names=nothing, tol=1e-4, digits=1)
+
 Prints equations of a SINDy model using saved or passed variable names
     Note: if 0.0 is displayed, this means the coefficient was nonzero to the
     tolerance specified in 'tol' but below the rounding threshold

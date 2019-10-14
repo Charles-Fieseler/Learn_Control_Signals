@@ -98,6 +98,17 @@ end
 #####
 ##### Creating model instances from chains
 #####
+"""
+function sindy_from_chain(model_template::sindyc_model,
+                          chain::MCMCChains.AbstractChains;
+                          enforced_zeros=true)
+
+Creates a sindyc_model object (nonlinear dynamical system) from
+a chain using the template of model terms in 'model_template';
+    If enforced_zeros=true, then the zeros of the 'model_template'
+    are enforced; the nonzero terms must match the number of
+    elements in the chain minus one (the last one is assumed to be noise)
+"""
 function sindy_from_chain(model_template::sindyc_model,
                           chain::MCMCChains.AbstractChains;
                           enforced_zeros=true)

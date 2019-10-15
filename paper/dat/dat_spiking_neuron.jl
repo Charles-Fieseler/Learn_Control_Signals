@@ -120,13 +120,14 @@ chain_ctr, best_sindy_ctr = calc_distribution_of_models(
     dat[:,subsample_ind],
     numerical_grad[:,subsample_ind],
     sindy_library,
-    val_list = calc_permutations(4,2),
+    val_list = calc_permutations(5,2),
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
 print_equations(best_sindy_ctr)
-# sindy_sample =  sindy_from_chain(best_sindy_ctr, chain_ctr)
-# plot(chain_ctr)
+sindy_sample =  sindy_from_chain(best_sindy_ctr, chain_ctr)
+print_equations(sindy_sample)
+density(chain_ctr)
 
 # Calculate updated control signal
 (residual_ctr, _, noise_ctr, _) =

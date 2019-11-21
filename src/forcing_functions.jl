@@ -1,6 +1,7 @@
 using Random
 using Interpolations
 
+U_func_time_trivial(t) = 0.0;
 U_func_time_trivial(t, u) = zeros(size(u));
 U_func_space_trivial(u) = zeros(size(u));
 

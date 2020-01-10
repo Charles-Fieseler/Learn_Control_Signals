@@ -40,8 +40,9 @@ function solve_sir_system(;U_func_time=U_func_time_trivial,
                                 U_func_time=U_func_time,
                                 U_func_space=U_func_space),
                     u0, tspan, p)
-    # sol = solve(prob, Tsit5(), saveat=ts);#, dt=tspan[2]-tspan[1]);
-    sol = solve(prob, AB5(), saveat=ts, dt=1e-6);
+    sol = solve(prob, Tsit5(), saveat=ts, adaptive=true,
+        dt=1e-5);#, abstol=1e-12, reltol=1e-5);
+    # sol = solve(prob, AB4(), saveat=ts, dt=1e-5);
     return sol
 end
 

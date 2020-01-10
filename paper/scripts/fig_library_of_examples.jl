@@ -96,7 +96,7 @@ plot_final = plot(
         plot_residual1, plot_ctr_guess, plot_ctr_true, plot_reconstruction,
         layout=lay)
 plot!(size=(2000, 400))
-fname = this_fig_name * "fig_library_lorenz.png";
+fname = this_fig_name * "lorenz.png";
 savefig(plot_final, fname)
 
 
@@ -187,5 +187,5 @@ plot_final = plot_library(this_dat_name, this_fig_name, "Rossler",
                 plot_ind=1001:2000,
                 plot_coordinate=3)
 
-fname = this_fig_name * "fig_library_rossler.png";
+fname = this_fig_name * "rossler.png";
 savefig(plot_final, fname)

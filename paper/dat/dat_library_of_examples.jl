@@ -16,10 +16,10 @@ include("../../utils/main_algorithm_utils.jl")
 include(EXAMPLE_FOLDERNAME*"example_sir.jl")
 
 # Define the multivariate forcing function
-num_ctr = 0;
+num_ctr = 4;
     U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0.1;
-    amplitude = 300.0
+    U_widths = 0.5;
+    amplitude = 100.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
                         F_dim=1,
@@ -66,7 +66,7 @@ val_list = calc_permutations(5,3)
     sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,500),
+                    selection_dist=Normal(0.0,300),
                     use_clustering_minimization=true)
 println("Naive SINDy model:")
     print_equations(sindy_unctr, var_names=["S","I","R"], digits=5)
@@ -96,7 +96,7 @@ end
 # NOTE: do not use Turing, for speed
 sindy_grad1 = sindy_unctr(dat, 0)
 residual = numerical_grad .- sindy_grad1
-noise_guess = 2*abs(median(residual[1,:]))
+noise_guess = 2*abs(median(residual[1,:])) # Really should use Turing here
 
 plot(residual[3,:], label="Residual")
     hline!([noise_guess], label="Noise line");
@@ -135,7 +135,7 @@ val_list = calc_permutations(6,3)
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,1e-5*noise_guess),
+                    selection_dist=Normal(0.0,2*noise_guess),
                     use_clustering_minimization=true)
 println("Best index is $best_index:")
     print_equations(sindy_sub, var_names=["S","I","R"], digits=5)

@@ -23,8 +23,8 @@ function sir_system(du, u, p, t;
     du[3] = gamma*I
 
     # This forcing function must keep the overall population constant
-    du[1] += -Ft
-    du[3] += Ft
+    du[1] += -Ft[1]
+    du[3] += Ft[1]
     # du .+= Ft .+ Fs
 end
 
@@ -40,8 +40,8 @@ function solve_sir_system(;U_func_time=U_func_time_trivial,
                                 U_func_time=U_func_time,
                                 U_func_space=U_func_space),
                     u0, tspan, p)
-    sol = solve(prob, Tsit5(), saveat=ts, adaptive=true,
-        dt=1e-5);#, abstol=1e-12, reltol=1e-5);
+    sol = solve(prob, Tsit5(), saveat=ts);#, adaptive=true,
+        #dt=1e-5);#, abstol=1e-12, reltol=1e-5);
     # sol = solve(prob, AB4(), saveat=ts, dt=1e-5);
     return sol
 end

@@ -11,7 +11,7 @@ include("../../utils/main_algorithm_utils.jl")
 
 ################################################################################
 #####
-##### SIR example
+##### Rossler example
 #####
 include(EXAMPLE_FOLDERNAME*"example_rossler.jl")
 

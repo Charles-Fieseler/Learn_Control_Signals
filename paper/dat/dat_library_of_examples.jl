@@ -16,10 +16,10 @@ include("../../utils/main_algorithm_utils.jl")
 include(EXAMPLE_FOLDERNAME*"example_sir.jl")
 
 # Define the multivariate forcing function
-num_ctr = 4;
-    U_starts = rand(1, num_ctr) .* tspan[2]/5
-    U_widths = 0.4;
-    amplitude = 100.0
+num_ctr = 0;
+    U_starts = rand(1, num_ctr) .* tspan[2]/2
+    U_widths = 0.1;
+    amplitude = 300.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
                         F_dim=1,
@@ -28,27 +28,31 @@ my_U_func_time2(t) = U_func_time(t, u0,
 # Get data
 sol = solve_sir_system(U_func_time=my_U_func_time2)
 dat = Array(sol)
-# plot(dat[1,:],dat[2,:],dat[3,:],label="Data")
-plot(ts,dat[1,:]);plot!(ts,dat[2,:]);plot!(ts,dat[3,:])
+plot(ts,dat[1,:], label="S");
+    plot!(ts,dat[2,:], label="I");
+    plot!(ts,dat[3,:], label="R")
 numerical_grad = numerical_derivative(dat, ts)
+true_grad = core_dyn_true(dat)
+plot(ts, true_grad[2,:]);plot!(ts, numerical_grad[2,:])
 
 ## Also get baseline true/ideal cases
 # Uncontrolled
-dat_raw = Array(solve_sir_system())
-numerical_grad_raw = numerical_derivative(dat_raw, ts)
-true_grad_raw = zeros(size(dat))
-for i in 1:size(dat,2)
-    true_grad_raw[:,i] = sir_system(dat_raw[:,i], Float64.(p), [0])
-end
+# dat_raw = Array(solve_sir_system())
+# numerical_grad_raw = numerical_derivative(dat_raw, ts)
+# true_grad_raw = zeros(size(dat))
+# for i in 1:size(dat,2)
+#     true_grad_raw[:,i] = sir_system(dat_raw[:,i], Float64.(p), [0])
+# end
 
 # True control signal
 U_true = zeros(size(dat))
 for (i, t) in enumerate(ts)
     U_true[:,i] = my_U_func_time2(t)
 end
-plot(ts,dat[1,:]);plot!(ts,dat[2,:]);plot!(ts,dat[3,:])
-    plot!(ts,U_true')
-
+plot(ts,dat[1,:], label="S");
+    plot!(ts,dat[2,:], label="I");
+    plot!(ts,dat[3,:], label="R")
+    plot!(ts,U_true', label="Control")
 
 
 ###
@@ -62,9 +66,16 @@ val_list = calc_permutations(5,3)
     sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,20),
+                    selection_dist=Normal(0.0,500),
                     use_clustering_minimization=true)
-print_equations(sindy_unctr, var_names=["S","I","R"])
+println("Naive SINDy model:")
+    print_equations(sindy_unctr, var_names=["S","I","R"], digits=5)
+println("True equations are:")
+    print_equations(core_dyn_true, var_names=["S","I","R"], digits=5)
+scatter(sum.(val_list), all_criteria)
+    title!("AIC for various sparsities (naive model)")
+    xlabel!("Number of nonzero terms")
+
 
 # Integrate this (poor) model
 # Callback aborts if it blows up
@@ -74,8 +85,8 @@ prob_unctr = ODEProblem(sindy_unctr, u0, tspan, [0], callback=cb)
 sindy_dat_unctr = Array(solve(prob_unctr, Tsit5(), saveat=ts));
 
 let d = sindy_dat_unctr, d2 = dat
-    plot(d[1,:]);plot!(d[2,:]);plot!(d[3,:])
-    plot!(d2[1,:]);plot!(d2[2,:]);plot!(d2[3,:])
+    plot(d[1,:], label="Naive model");#plot!(d[2,:]);plot!(d[3,:])
+    plot!(d2[1,:], label="Data");#plot!(d2[2,:]);plot!(d2[3,:])
 end
 
 
@@ -85,9 +96,12 @@ end
 # NOTE: do not use Turing, for speed
 sindy_grad1 = sindy_unctr(dat, 0)
 residual = numerical_grad .- sindy_grad1
-noise_guess = 100*abs(median(residual[1,:]))
+noise_guess = 2*abs(median(residual[1,:]))
 
-plot(residual[2,:])
+plot(residual[3,:], label="Residual")
+    hline!([noise_guess], label="Noise line");
+    hline!([-noise_guess], label="Noise line")
+    # title!("Residual")
 
 ctr_guess = process_residual(residual, noise_guess)
 
@@ -98,16 +112,18 @@ ctr_guess = process_residual(residual, noise_guess)
 accepted_ind = subsample_using_residual(residual,
             noise_guess, min_length=4)
 
-num_pts = 300
+num_pts = 2000
 start_ind = 1
 subsample_ind = accepted_ind[start_ind:num_pts+start_ind-1]
 dat_sub = dat[:,subsample_ind]
 grad_sub = numerical_grad[:,subsample_ind]
 
 # Plot the subsampled points
-plot(dat[1,:])
-    scatter!(subsample_ind, dat_sub[1,:], color=:blue)
-    plot!(U_true[1,:])
+i = 2
+    plot(dat[i,:])
+    scatter!(subsample_ind, dat_sub[i,:], color=:blue)
+    plot!(U_true[i,:])
+    title!("Subsampled points for index $i")
 
 # Any control signal in the subset?
 # U_sub = U_true[:,subsample_ind]
@@ -119,10 +135,23 @@ val_list = calc_permutations(6,3)
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,100*noise_guess),
-                    use_clustering_minimization=false)
-println("Best index is $best_index")
-print_equations(sindy_sub)
+                    selection_dist=Normal(0.0,1e-5*noise_guess),
+                    use_clustering_minimization=true)
+println("Best index is $best_index:")
+    print_equations(sindy_sub, var_names=["S","I","R"], digits=5)
+println("True equations are:")
+    print_equations(core_dyn_true, var_names=["S","I","R"], digits=5)
 scatter(sum.(val_list), all_criteria)
     title!("AIC for various sparsities")
     xlabel!("Number of nonzero terms")
+
+
+
+# Plot a function for the subsampled points
+f(S, I, R) = -0.00027*I.*I .- 0.0002*I.*R
+g(S, I, R) = -0.2*I
+i = 2
+    plot(g(dat[1,:], dat[2,:], dat[3,:]), label="True")
+    scatter!(subsample_ind, g(dat_sub[1,:], dat_sub[2,:], dat_sub[3,:]))
+    plot!(f(dat[1,:], dat[2,:], dat[3,:]), label="Found")
+    title!("Subsampled points for index $i")

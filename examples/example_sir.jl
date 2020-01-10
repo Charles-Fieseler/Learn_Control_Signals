@@ -23,8 +23,8 @@ function sir_system(du, u, p, t;
     du[3] = gamma*I
 
     # This forcing function must keep the overall population constant
-    du[1] += -Ft[1]
-    du[3] += Ft[1]
+    du[1] += -Ft
+    du[3] += Ft
     # du .+= Ft .+ Fs
 end
 
@@ -32,7 +32,7 @@ end
 # Generate data, with a time component
 p = [0.5, 0.2]
 u0 = [999.0, 1.0, 0.0]
-ts = range(tspan[1], tspan[2], length=5000)
+ts = range(tspan[1], tspan[2], length=5001)
 
 function solve_sir_system(;U_func_time=U_func_time_trivial,
                               U_func_space=U_func_space_trivial)
@@ -40,7 +40,8 @@ function solve_sir_system(;U_func_time=U_func_time_trivial,
                                 U_func_time=U_func_time,
                                 U_func_space=U_func_space),
                     u0, tspan, p)
-    sol = solve(prob, Tsit5(), saveat=ts);#, dt=tspan[2]-tspan[1]);
+    # sol = solve(prob, Tsit5(), saveat=ts);#, dt=tspan[2]-tspan[1]);
+    sol = solve(prob, AB5(), saveat=ts, dt=1e-6);
     return sol
 end
 
@@ -62,19 +63,21 @@ end
 #####
 ##### True model in SINDy syntax
 #####
-# a, b = p
-# #      x    y  c   xx    xy yy
-#  A = [[5   -1  140  0.04  0  0];
-#       [a*b -a  0    0     0  0]]
-# n = size(A, 1)
-# sindy_library = Dict(
-#     "cross_terms"=>2,
-#     "constant"=>nothing
-# );
-# core_dyn_true = sindyc_model(A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
-#                             convert_string2function(sindy_library),
-#                             ["x", "y"])
+a, b = p
+a = a / sum(u0)
+#      S  I  R  c SS SI SR II IR RR
+ A = [[0  0  0  0  0 -a  0  0  0  0];
+      [0 -b  0  0  0  a  0  0  0  0];
+      [0  b  0  0  0  0  0  0  0  0]]
+n = size(A, 1)
+sindy_library = Dict(
+    "cross_terms"=>2,
+    "constant"=>nothing
+);
+core_dyn_true = sindyc_model(A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
+                            convert_string2function(sindy_library),
+                            ["S", "I", "R"])
 
 # Actually export
-export ts, solve_sir_system, sir_system#, core_dyn_true
+export ts, solve_sir_system, sir_system, core_dyn_true
     # ,lorenz_grad_residual

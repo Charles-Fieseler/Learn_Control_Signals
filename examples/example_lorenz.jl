@@ -1,4 +1,4 @@
-using OrdinaryDiffEq, DifferentialEquations
+using OrdinaryDiffEq, DifferentialEquations, Turing
 
 tspan = (0.0f0, 50.0f0)
 

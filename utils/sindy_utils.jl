@@ -115,8 +115,9 @@ function print_equations(model::sindyc_model;
                          var_names=nothing, tol=1e-4, digits=1)
     n, m = size(model.A)
     if var_names == nothing
-        default_names = ["x"; "y"; "z"]
-        var_names = default_names[1:n]
+        # default_names = ["x"; "y"; "z"]
+        # var_names = default_names[1:n]
+        var_names = model.variable_names;
     end
     term_names = build_term_names(model, var_names)
     for i_var in 1:n

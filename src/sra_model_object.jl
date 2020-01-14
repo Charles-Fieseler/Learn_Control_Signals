@@ -1,5 +1,6 @@
 # Core data structure for the state of an SRA analysis
 #   See also: sra_model_plotting.jl for plotting methods
+#   See also: sra_model_function.jl for the analysis steps
 
 #####
 ##### Helper structure, for the analysis parameters
@@ -16,7 +17,7 @@ struct sra_parameters
     variable_names
     sindy_library::Dict
     sindy_terms_list::Vector
-    sindy_minimization_options
+    sindyc_ensemble_parameters
     # Subsampling to get the next iteration
     num_pts::Number
     start_ind::Number
@@ -66,10 +67,13 @@ end
 ##### Main structure, for the current state
 #####
 struct sra_stateful_object
+    is_saved::Bool
     parameters::sra_parameters
     # Initial data and gradients
-    ts::Vector
+    ts
+    tspan
     dat::Array
+    u0::Vector # Note: initial conditions may not be same as training data
     numerical_grad::Array
     # Analysis history
     all_sindy_models
@@ -77,12 +81,28 @@ struct sra_stateful_object
     all_best_sindy_criteria
     all_sindy_dat
     all_residuals
-    all_accepted_ind
+    all_subsample_ind
+    all_noise_guesses
     # Current analysis state
     sindy_model
     ensemble_sindy_criteria
     best_sindy_criteria
     sindy_dat
     residual
-    accepted_ind
+    subsample_ind
+    noise_guess
 end
+
+# Initializer with defaults
+function sra_stateful_object(ts, tspan, dat, u0, numerical_grad)
+    return sra_stateful_object(
+        true,
+        get_sra_defaults(),
+        ts, tspan, dat, u0, numerical_grad,
+        [], [], [], [], [], [], [],
+        nothing, nothing, nothing, nothing, nothing, nothing, nothing
+        )
+end
+
+export sra_stateful_object, sra_truth_object,
+    sra_parameters, get_sra_defaults

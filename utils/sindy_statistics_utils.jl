@@ -107,12 +107,12 @@ end
 An options struct to make it easier to call sindyc_ensemble
 """
 function get_sindyc_ensemble_parameters()
-    return (U=nothing,
-        ts=ts, # TODO: takes ts from the current scope
-        selection_criterion=my_aic,
-        selection_dist=Normal(),
-        sparsification_mode="quantile",
-        use_clustering_minimization=false)
+    return Dict(:U=>nothing,
+        :ts=>ts, # TODO: takes ts from the current scope
+        :selection_criterion=>my_aicc,
+        :selection_dist=>Normal(),
+        :sparsification_mode=>"num_terms", # NOTE: different from raw object above
+        :use_clustering_minimization=>false)
 end
 
 

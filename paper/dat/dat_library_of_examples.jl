@@ -16,9 +16,9 @@ include("../../utils/main_algorithm_utils.jl")
 include(EXAMPLE_FOLDERNAME*"example_sir.jl")
 
 # Define the multivariate forcing function
-num_ctr = 4;
+num_ctr = 3;
     U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0.5;
+    U_widths = 0.6;
     amplitude = 100.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
@@ -66,12 +66,12 @@ val_list = calc_permutations(5,3)
     sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                     selection_criterion=my_aicc,
                     sparsification_mode="num_terms",
-                    selection_dist=Normal(0.0,300),
+                    selection_dist=Normal(0.0,100),
                     use_clustering_minimization=true)
 println("Naive SINDy model:")
-    print_equations(sindy_unctr, var_names=["S","I","R"], digits=5)
+    print_equations(sindy_unctr, digits=5)
 println("True equations are:")
-    print_equations(core_dyn_true, var_names=["S","I","R"], digits=5)
+    print_equations(core_dyn_true, digits=5)
 scatter(sum.(val_list), all_criteria)
     title!("AIC for various sparsities (naive model)")
     xlabel!("Number of nonzero terms")
@@ -84,10 +84,11 @@ cb = DiscreteCallback(condition, terminate!)
 prob_unctr = ODEProblem(sindy_unctr, u0, tspan, [0], callback=cb)
 sindy_dat_unctr = Array(solve(prob_unctr, Tsit5(), saveat=ts));
 
-let d = sindy_dat_unctr, d2 = dat
-    plot(d[1,:], label="Naive model");#plot!(d[2,:]);plot!(d[3,:])
-    plot!(d2[1,:], label="Data");#plot!(d2[2,:]);plot!(d2[3,:])
-end
+# let d = sindy_dat_unctr, d2 = dat
+#     i = 1;
+#     plot(d[i,:], label="Naive model");#plot!(d[2,:]);plot!(d[3,:])
+#     plot!(d2[i,:], label="Data");#plot!(d2[2,:]);plot!(d2[3,:])
+# end
 
 
 ###
@@ -138,9 +139,9 @@ val_list = calc_permutations(6,3)
                     selection_dist=Normal(0.0,2*noise_guess),
                     use_clustering_minimization=true)
 println("Best index is $best_index:")
-    print_equations(sindy_sub, var_names=["S","I","R"], digits=5)
+    print_equations(sindy_sub, digits=5)
 println("True equations are:")
-    print_equations(core_dyn_true, var_names=["S","I","R"], digits=5)
+    print_equations(core_dyn_true, digits=5)
 scatter(sum.(val_list), all_criteria)
     title!("AIC for various sparsities")
     xlabel!("Number of nonzero terms")
@@ -148,10 +149,10 @@ scatter(sum.(val_list), all_criteria)
 
 
 # Plot a function for the subsampled points
-f(S, I, R) = -0.00027*I.*I .- 0.0002*I.*R
-g(S, I, R) = -0.2*I
-i = 2
-    plot(g(dat[1,:], dat[2,:], dat[3,:]), label="True")
-    scatter!(subsample_ind, g(dat_sub[1,:], dat_sub[2,:], dat_sub[3,:]))
-    plot!(f(dat[1,:], dat[2,:], dat[3,:]), label="Found")
-    title!("Subsampled points for index $i")
+# f(S, I, R) = -0.00027*I.*I .- 0.0002*I.*R
+# g(S, I, R) = -0.2*I
+# i = 2
+#     plot(g(dat[1,:], dat[2,:], dat[3,:]), label="True")
+#     scatter!(subsample_ind, g(dat_sub[1,:], dat_sub[2,:], dat_sub[3,:]))
+#     plot!(f(dat[1,:], dat[2,:], dat[3,:]), label="Found")
+#     title!("Subsampled points for index $i")

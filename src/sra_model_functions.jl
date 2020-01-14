@@ -21,15 +21,20 @@ print_true_equations
 
 Expectation: this model will not be very good!
 """
-function fit_first_model(m::sra_stateful_object)
+function fit_first_model(m::sra_stateful_object, initial_noise)
+    # TODO: move to parameter object
     p = m.parameters
+    # Change noise estimate based on previous guess
+    ensemble_p = p.sindyc_ensemble_parameters
+    # ensemble_p._replace(selection_dist=Normal(0.0, initial_noise))
+    ensemble_p[:selection_dist] = Normal(0.0, initial_noise)
     (sindy_model,best_criterion,all_criteria,all_models) =
         sindyc_ensemble(
                 m.dat,
                 m.numerical_grad,
                 p.sindy_library,
-                p.sindy_terms_list,
-                p.sindyc_ensemble_parameters...)
+                p.sindy_terms_list;
+                ensemble_p...)
     m.sindy_model = sindy_model
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
@@ -55,20 +60,20 @@ function fit_model(m::sra_stateful_object)
     p = m.parameters
     # New: change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
-    ensemble_p.selection_dist = Normal(0.0, m.noise_guess)
+    ensemble_p[:selection_dist] = Normal(0.0, m.noise_guess)
     # Same
     (sindy_model,best_criterion,all_criteria,all_models) =
         sindyc_ensemble(
                 m.dat,
                 m.numerical_grad,
                 p.sindy_library,
-                p.sindy_terms_list,
-                p.sindyc_ensemble_parameters...)
+                p.sindy_terms_list;
+                ensemble_p...)
     # These overwrite the previous step, which has been saved
     m.sindy_model = sindy_model
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
-    m.is_saved = true;
+    m.is_saved = false;
 end
 
 
@@ -91,13 +96,22 @@ function calculate_subsampled_ind(m::sra_stateful_object)
         sindy_grad = m.sindy_model(dat, 0)
         residual = m.numerical_grad .- sindy_grad
         # TODO: don't hardcode the index here
-        noise_guess = m.noise_factor*abs(median(residual[1,:])) # Really should use Turing here
+        noise_guess = p.noise_factor*abs(median(residual[1,:])) # Really should use Turing here
     else
         error("Turing not implemented in stateful version")
     end
     # TODO: don't hardcode length (and other parameters)
-    accepted_ind = subsample_using_residual(residual,
-                noise_guess, min_length=4)
+    # TODO: Should this really be a loop?
+    accepted_ind = []
+    tmp_noise_factor = 1.0
+    i = 1
+    while length(accepted_ind) < p.num_pts
+        accepted_ind = subsample_using_residual(residual,
+                    tmp_noise_factor*noise_guess, min_length=4);
+        i += 1;
+        i > 10 && break
+        tmp_noise_factor *= 1.5;
+    end
 
     m.subsample_ind = accepted_ind[p.start_ind:p.num_pts+p.start_ind-1]
     m.noise_guess = noise_guess

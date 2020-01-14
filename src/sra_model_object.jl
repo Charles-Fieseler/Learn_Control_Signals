@@ -26,7 +26,7 @@ end
 # Initializer with defaults
 function get_sra_defaults()
     debug_mode = true;
-    debug_folder = nothing;
+    debug_folder = "";
     # Initial, naive model
     initial_subsampling = false;
     # Calculating residuals of the previous model
@@ -41,13 +41,14 @@ function get_sra_defaults()
     num_pts = 1000;
     start_ind = 1;
 
-    return sra_parameters(debug_mode, debug_file,
+    return sra_parameters(debug_mode, debug_folder,
         initial_subsampling,
         use_turing,
         noise_factor,
+        variable_names,
         sindy_library,
         sindy_terms_list,
-        sindy_minimization_options,
+        sindyc_ensemble_parameters,
         num_pts,
         start_ind)
 end
@@ -66,7 +67,7 @@ end
 #####
 ##### Main structure, for the current state
 #####
-struct sra_stateful_object
+mutable struct sra_stateful_object
     is_saved::Bool
     parameters::sra_parameters
     # Initial data and gradients
@@ -96,7 +97,7 @@ end
 # Initializer with defaults
 function sra_stateful_object(ts, tspan, dat, u0, numerical_grad)
     return sra_stateful_object(
-        true,
+        false,
         get_sra_defaults(),
         ts, tspan, dat, u0, numerical_grad,
         [], [], [], [], [], [], [],

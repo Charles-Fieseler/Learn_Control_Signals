@@ -6,13 +6,14 @@
 #####
 struct sra_parameters
     debug_mode::Bool
-    debug_file::String
+    debug_folder::String
     # Initial, naive model
     initial_subsampling::Bool
     # Calculating residuals of the previous model
     use_turing::Bool
     noise_factor::Number
     # Parameters shared between all iterations of SINDy model
+    variable_names
     sindy_library::Dict
     sindy_terms_list::Vector
     sindy_minimization_options
@@ -24,13 +25,14 @@ end
 # Initializer with defaults
 function get_sra_defaults()
     debug_mode = true;
-    debug_file = nothing;
+    debug_folder = nothing;
     # Initial, naive model
     initial_subsampling = false;
     # Calculating residuals of the previous model
     use_turing = false;
     noise_factor = 1.0;
     # Parameters shared between all iterations of SINDy model
+    variable_names = ["x", "y", "z"]
     sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
     sindy_terms_list = calc_permutations(6,3);
     sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
@@ -53,7 +55,7 @@ end
 #####
 ##### Helper structure, for the true values
 #####
-struct sra_stateful_object
+struct sra_truth_object
     true_grad::Array
     U_true
     core_dyn_true
@@ -64,19 +66,23 @@ end
 ##### Main structure, for the current state
 #####
 struct sra_stateful_object
+    parameters::sra_parameters
     # Initial data and gradients
+    ts::Vector
     dat::Array
     numerical_grad::Array
     # Analysis history
     all_sindy_models
     all_ensemble_sindy_criteria
     all_best_sindy_criteria
+    all_sindy_dat
     all_residuals
     all_accepted_ind
     # Current analysis state
     sindy_model
     ensemble_sindy_criteria
     best_sindy_criteria
+    sindy_dat
     residual
     accepted_ind
 end

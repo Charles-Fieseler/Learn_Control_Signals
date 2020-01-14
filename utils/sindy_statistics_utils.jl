@@ -103,7 +103,19 @@ function sindyc_ensemble(X, X_grad, library, val_list;
             best_index=best_index)
 end
 
+"""
+An options struct to make it easier to call sindyc_ensemble
+"""
+function get_sindyc_ensemble_parameters()
+    return (U=nothing,
+        ts=ts, # TODO: takes ts from the current scope
+        selection_criterion=my_aic,
+        selection_dist=Normal(),
+        sparsification_mode="quantile",
+        use_clustering_minimization=false)
+end
+
 
 #
-export sindyc_ensemble,
+export sindyc_ensemble, get_sindyc_ensemble_parameters,
         my_aic, my_aicc, my_dof

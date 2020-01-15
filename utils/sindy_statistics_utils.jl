@@ -8,7 +8,7 @@ using StatsBase, Clustering
 Gets number of degrees of freedom, which is equal to the
 number of nonzero terms + 1 for noise
 """
-my_dof(m) = length(get_nonzero_terms(m)) + 1
+my_dof(m::sindyc_model) = length(get_nonzero_terms(m)) + 1
 
 
 #####
@@ -31,6 +31,14 @@ function my_aicc(m::sindyc_model, dat, predictor; dist=Normal())
     correction = 2k*(k+1)/(n-k-1)
     return my_aic(m, dat, predictor, dist=dist) + correction
 end
+
+
+"""
+Akaike Information Criterion (AIC), without being 'clever' and using an error
+    distribution as in the above function
+"""
+simple_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
+    2log(sum(m(dat) .- predictor).^2) + 2my_dof(m)
 
 
 #####

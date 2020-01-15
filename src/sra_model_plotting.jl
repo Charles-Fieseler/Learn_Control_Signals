@@ -21,6 +21,12 @@ function plot_data(m::sra_stateful_object, which_dim=1)
     title!("Raw data (variable $which_dim)")
 end
 
+function plot_derivative(m::sra_stateful_object, which_dim=1)
+    names = m.parameters.variable_names
+    plot(m.ts,m.numerical_grad[which_dim,:], label=names[which_dim]);
+    title!("Numerical derivative (variable $which_dim)")
+end
+
 #####
 ##### Plotting against the truth
 #####
@@ -66,6 +72,16 @@ function plot_sindy_model(m::sra_stateful_object, which_dim=1)
     title!("Integration of current model")
 end
 
+
+function plot_sindy_derivatives(m::sra_stateful_object, which_dim=1)
+    plot_derivative(m, which_dim)
+    name = m.parameters.variable_names[which_dim]
+    sindy_deriv = m.sindy_model(m.dat, 0)
+    plot!(m.ts, sindy_deriv[which_dim,:],
+        label="Simulation ($name)");
+    title!("Derivatives of current model")
+end
+
 #####
 ##### Subsampling visualizations
 #####
@@ -86,6 +102,9 @@ function plot_residual(m::sra_stateful_object, which_dim=1)
     hline!([-m.noise_guess], label="Noise line")
 end
 
+"""
+Plots the data and the integrated model.
+"""
 function plot_subsampled_simulation(m::sra_stateful_object, which_dim=1)
     plot_sindy_model(m, which_dim)
     dat_sub = m.dat[:, m.subsample_ind]
@@ -93,6 +112,19 @@ function plot_subsampled_simulation(m::sra_stateful_object, which_dim=1)
     scatter!(ts_sub, dat_sub[which_dim,:], color=:blue)
     xlims!((ts_sub[1], ts_sub[end]))
     title!("Subsampled points with integrated model (Variable $which_dim)")
+end
+
+"""
+Plots the numerical derivative and the derivatives evaluated from the model.
+    Note: no integration is performed
+"""
+function plot_subsampled_derivatives(m::sra_stateful_object, which_dim=1)
+    plot_sindy_derivatives(m, which_dim)
+    deriv_sub = m.numerical_grad[:, m.subsample_ind]
+    ts_sub = m.ts[m.subsample_ind]
+    scatter!(ts_sub, deriv_sub[which_dim,:], color=:blue)
+    xlims!((ts_sub[1], ts_sub[end]))
+    title!("Subsampled points with sindy derivatives (Variable $which_dim)")
 end
 
 ##### Export

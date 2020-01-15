@@ -50,6 +50,8 @@ TODO: noise_factor
 See methods:
 print_current_equations
 print_true_equations
+plot_subsampled_derivatives
+plot_subsampled_simulation
 
 Expectation: this model will not be very good!
 """
@@ -71,6 +73,7 @@ function fit_model(m::sra_stateful_object)
                 ensemble_p...)
     # These overwrite the previous step, which has been saved
     m.sindy_model = sindy_model
+    m.sindy_dat = nothing # Reset
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
     m.is_saved = false;

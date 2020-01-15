@@ -1,6 +1,8 @@
 using Distributions
 using StatsBase, Clustering
+using MLBase # Just for cross validation
 
+################################################################################
 #####
 ##### Helper functions
 #####
@@ -38,9 +40,38 @@ Akaike Information Criterion (AIC), without being 'clever' and using an error
     distribution as in the above function
 """
 simple_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
-    2log(sum(m(dat) .- predictor).^2) + 2my_dof(m)
+    2log(my_rss(m, dat, predictor)) + 2my_dof(m)
 
 
+################################################################################
+#####
+##### Cross validation
+#####
+
+"""
+Computes the residual sum of squares error for a SINDYc model
+"""
+my_rss(m::sindyc_model, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
+
+"""
+Computes the k-folds cross validation of a SINDYc model
+    From: https://mlbasejl.readthedocs.io/en/latest/crossval.html
+"""
+function sindy_cross_validate(m::sindyc_model, dat, predictor; dist=Normal())
+    n = size(dat, 2);
+    scores = cross_validate(
+        train_inds -> m(dat[:, train_inds], 0),        # training function
+        # TODO: the rss shouldn't need the data itself
+        (c, test_inds) -> my_rss(m, dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
+        n,              # total number of samples
+        Kfold(n, 3))    # cross validation plan: 3-fold
+    return mean(scores)
+end
+
+# sindy_cross_validate(m::sindyc_model, dat, predictor; dist=Normal()) =
+#     sindy_cross_validate(m, dat, predictor)
+
+################################################################################
 #####
 ##### Ensemble testing functions
 #####

@@ -38,6 +38,7 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
     m.sindy_model = sindy_model
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
+    m.i = 1 # Resets counter
 end
 
 """
@@ -76,7 +77,9 @@ function fit_model(m::sra_stateful_object)
     m.sindy_dat = nothing # Reset
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
-    m.is_saved = false;
+    m.is_saved = false
+    m.i += 1
+    return all_models # DEBUG
 end
 
 

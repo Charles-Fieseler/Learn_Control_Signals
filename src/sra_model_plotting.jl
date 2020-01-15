@@ -48,7 +48,12 @@ end
 ##### Sindy equation printing
 #####
 function print_current_equations(m::sra_stateful_object; kwargs...)
-    println("Current model equations:")
+    i = m.i
+    if i > 1
+        println("Current model equations for iteration $i:")
+    else
+        println("Naive model equations (initial iteration):")
+    end
     print_equations(m.sindy_model; kwargs...)
 end
 

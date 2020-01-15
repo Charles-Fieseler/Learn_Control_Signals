@@ -99,7 +99,7 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     n = length(val_list)
     all_models = Vector(undef, n)
     all_criteria = zeros(n)
-    # Convinience function
+    # Convenience function
     make_model(x) = if sparsification_mode == "quantile"
         sindyc(X, X_grad, U; library=library,
                                 use_lasso=true,

@@ -48,17 +48,26 @@ this_truth = sra_truth_object(true_grad, U_true, core_dyn_true)
 #####
 # Initialize
 this_model = sra_stateful_object(ts, tspan, dat, u0, numerical_grad)
+this_model.parameters.sindyc_ensemble_parameters[:selection_criterion] =
+    sindy_cross_validate;
+# this_model.parameters.variable_names = ["S", "I", "R"]
 fit_first_model(this_model, 100);
-
+print_current_equations(this_model, digits=5)
 
 ### Iterate
 calculate_subsampled_ind(this_model);
-fit_model(this_model);
+all_models = fit_model(this_model);
 
 # println("Iteration $i")
 print_current_equations(this_model, digits=5)
 print_true_equations(this_truth, digits=5)
 
 plot_subsampled_points(this_model)
-plot_subsampled_simulation(this_model)
+# plot_subsampled_simulation(this_model, 2)
+plot_subsampled_derivatives(this_model, 1)
 plot_residual(this_model)
+
+
+# Cheating... this works perfectly!
+this_model.sindy_model = core_dyn_true;
+plot_subsampled_derivatives(this_model, 1)

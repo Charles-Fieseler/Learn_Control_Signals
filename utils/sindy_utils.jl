@@ -51,12 +51,12 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     library = convert_string2function(library)
     X_augmented = calc_augmented_data(X, library)
     if !use_lasso
+        # i.e. is a dense model
         A, B = dmdc(X_augmented, X_grad, U)
         A = A[1:n, :]
         B = B[1:n, :]
     else
         # UPDATE: use my own sequential least squares threshold
-        # TODO: make work with control signal
         if U == nothing
             A = sparse_regression(X_augmented, X_grad,
                                 hard_threshold=hard_threshold,
@@ -202,6 +202,7 @@ function calc_cross_terms(X, order)
         X = reshape(X, (length(X), 1))
     end
     n, m = size(X)
+    # TODO: This is NOT combinations, right?
     all_powers = calc_permutations(n, order)
     cross_terms = nothing
 

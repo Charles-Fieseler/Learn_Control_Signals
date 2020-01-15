@@ -61,6 +61,7 @@ function sparse_regression(X::Matrix, y::Matrix;
         # For the 2d predictor case, just loop over rows
         for i in 1:size(y,1)
             if num_terms !== nothing
+                # Constrain the number of terms row by row
                 if length(num_terms)>1
                     n = num_terms[i]
                 else

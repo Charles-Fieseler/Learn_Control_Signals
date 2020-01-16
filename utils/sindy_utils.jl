@@ -54,7 +54,9 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
         # i.e. is a dense model
         A, B = dmdc(X_augmented, X_grad, U)
         A = A[1:n, :]
-        B = B[1:n, :]
+        if U !== nothing
+            B = B[1:n, :]
+        end
     else
         # UPDATE: use my own sequential least squares threshold
         if U == nothing

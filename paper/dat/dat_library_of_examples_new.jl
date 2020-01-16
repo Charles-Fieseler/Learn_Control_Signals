@@ -21,7 +21,7 @@ include(EXAMPLE_FOLDERNAME*"example_sir.jl")
 # Define the multivariate forcing function
 num_ctr = 3;
     U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0.6;
+    U_widths = 0;#0.6;
     amplitude = 100.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
@@ -42,7 +42,6 @@ end
 # Intialize truth object
 this_truth = sra_truth_object(true_grad, U_true, core_dyn_true)
 
-
 #####
 ##### Build SRA object and analyze
 #####
@@ -53,6 +52,27 @@ this_model.parameters.sindyc_ensemble_parameters[:selection_criterion] =
 # this_model.parameters.variable_names = ["S", "I", "R"]
 fit_first_model(this_model, 100);
 print_current_equations(this_model, digits=5)
+
+################################################################
+### TESTING
+opts = Dict(
+    :library=>this_model.parameters.sindy_library,
+    :use_lasso=>true,
+    :quantile_threshold=>nothing,
+    :num_terms=>[1, 2, 1],
+    :var_names=>["S", "I", "R"])
+m = sindyc(dat, numerical_grad, nothing, ts; opts...)
+
+opts = Dict(
+    :library=>this_model.parameters.sindy_library,
+    :use_lasso=>false,
+    :var_names=>["S", "I", "R"])
+m2 = sindyc(dat, numerical_grad, nothing, ts; opts...)
+
+lib = convert_string2function(opts[:library])
+aug = calc_augmented_data(dat, lib)
+condition_number = LinearAlgebra.cond(aug)
+#################################################################
 
 ### Iterate
 calculate_subsampled_ind(this_model);

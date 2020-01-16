@@ -78,7 +78,7 @@ function sparse_regression(X::Matrix, y::Matrix;
         end
         return A
     end
-    # Initialize with L2
+    # If this is only one row, initialize with L2
     A = y/X
     # sparsify_signal!(A, quantile_threshold=quantile_threshold)
     # Redo, removing the rows in X that were zeroed out
@@ -93,7 +93,7 @@ function sparse_regression(X::Matrix, y::Matrix;
         which_rows = vec(abs.(A) .> 0)
         A_subset = y/(X[which_rows, :])
         A[which_rows] = A_subset
-        A[.!which_rows] .= 0.0 # Retain the previous zeroes
+        A[.!which_rows] .= 0.0 # Retain the previous zeros
     end
 
     return A

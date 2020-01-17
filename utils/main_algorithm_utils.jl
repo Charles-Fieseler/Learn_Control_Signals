@@ -13,7 +13,7 @@ calc_distribution_of_models(dat,
                              chain_opt=(iterations=200,
                                         num_training_pts=100,
                                         start_ind=101),
-                             val_list=calc_permutations(5,2))
+                                        val_list = Iterators.product(1:3,1:3))
 
 Returns both the Turing chain and the sindyc_model used as the
         priors for the coefficients.
@@ -27,7 +27,7 @@ function calc_distribution_of_models(dat,
                                      chain_opt=(iterations=200,
                                                 num_training_pts=100,
                                                 start_ind=101),
-                                     val_list=calc_permutations(5,2))
+                                                val_list = Iterators.product(1:3,1:3)) # DEBUG
    # Use AIC to find the best model
    (best_sindy_model,best_criterion,all_criteria,all_models, best_index) =
        sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
@@ -120,7 +120,7 @@ Optional step 0: Randomly subsample the initial data (for the naive model)
 calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
                                     num_pts=400,
                                     num_subsamples=10,
-                                    val_list=calc_permutations(5,2))
+                                    val_list = Iterators.product(1:3,1:3))
 return (best_initial_subsample=best_initial_subsample,
         best_model=all_final_models2[tmp_ind],
         all_initial_subsamples=initial_subsamples,
@@ -129,7 +129,7 @@ return (best_initial_subsample=best_initial_subsample,
 function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
                                     num_pts=400,
                                     num_subsamples=10,
-                                    val_list=calc_permutations(5,2))
+                                    val_list = Iterators.product(1:3,1:3)) # DEBUG
     # Initially, randomly subsample the data
     initial_subsamples = []
     for i in 1:num_subsamples

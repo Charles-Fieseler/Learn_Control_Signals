@@ -64,7 +64,9 @@ U_true2 = hcat(U_func_total.(ts)...)
 sindy_library = Dict("cross_terms"=>2, "constant"=>nothing);
 chain_unctr, best_sindy_unctr = calc_distribution_of_models(
     dat, numerical_grad, sindy_library,
-    val_list = calc_permutations(3,2)
+    # val_list = calc_permutations(3,2)
+    # val_list = combinations(1:3, 2)
+    val_list = Iterators.product(1:3,1:3) # DEBUG
 )
 
 plot(chain_unctr)
@@ -103,7 +105,9 @@ i = 2
     plot!(subsample_ind,numerical_grad[i,subsample_ind], label="data")
     title!("Data and model for channel $i")
 
-val_list = calc_permutations(5,2)
+# val_list = calc_permutations(5,2)
+# val_list = combinations(1:5, 2)
+val_list = Iterators.product(1:3,1:3) # DEBUG
 (final_sindy_model,best_criterion,all_criteria,_, _) =
      sindyc_ensemble(dat[:,subsample_ind],
                      numerical_grad[:, subsample_ind],
@@ -120,7 +124,9 @@ chain_ctr, best_sindy_ctr = calc_distribution_of_models(
     dat[:,subsample_ind],
     numerical_grad[:,subsample_ind],
     sindy_library,
-    val_list = calc_permutations(5,2),
+    # val_list = calc_permutations(5,2),
+    # val_list = combinations(1:5, 2),
+    val_list = Iterators.product(1:3,1:3), # DEBUG
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
@@ -154,14 +160,18 @@ best_initial_subsample = calc_best_random_subsample(
     dat2, numerical_grad2, sindy_library;
     num_pts=num_pts,
     num_subsamples=10,
-    val_list=calc_permutations(5,2)
+    # val_list=calc_permutations(5,2)
+    # val_list = combinations(1:5, 2)
+    val_list = Iterators.product(1:3,1:3) # DEBUG
 )[1]
 
 # Now start the regularly scheduled Turing
 chain_unctr2, best_sindy_unctr2 = calc_distribution_of_models(
     dat2[:,best_initial_subsample],
     numerical_grad2[:,best_initial_subsample], sindy_library,
-    val_list = calc_permutations(5,2),
+    # val_list = calc_permutations(5,2),
+    # val_list = combinations(1:5, 2),
+    val_list = Iterators.product(1:3,1:3), # DEBUG
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 
@@ -200,7 +210,9 @@ i = 2
     plot!(subsample_ind,numerical_grad2[i,subsample_ind], label="data")
     title!("Data and model for channel $i")
 
-val_list = calc_permutations(5,2)
+# val_list = calc_permutations(5,2)
+# val_list = combinations(1:5, 2)
+val_list = Iterators.product(1:3,1:3) # DEBUG
 (final_sindy_model2,best_criterion2,all_criteria2,_, _) =
      sindyc_ensemble(dat2[:,subsample_ind],
                      numerical_grad2[:, subsample_ind],
@@ -220,7 +232,9 @@ chain_ctr2, best_sindy_ctr2 = calc_distribution_of_models(
     dat2[:,subsample_ind],
     numerical_grad2[:,subsample_ind],
     sindy_library,
-    val_list = calc_permutations(4,2),
+    # val_list = calc_permutations(4,2),
+    # val_list = combinations(1:4, 2),
+    val_list = Iterators.product(1:3,1:3) # DEBUG
     chain_opt = (iterations=200, train_ind=1:num_pts)
 )
 

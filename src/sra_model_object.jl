@@ -1,3 +1,4 @@
+# using Combinatorics
 # Core data structure for the state of an SRA analysis
 #   See also: sra_model_plotting.jl for plotting methods
 #   See also: sra_model_function.jl for the analysis steps
@@ -16,7 +17,7 @@ struct sra_parameters
     # Parameters shared between all iterations of SINDy model
     variable_names
     sindy_library::Dict
-    sindy_terms_list::Vector
+    sindy_terms_list
     sindyc_ensemble_parameters
     # Subsampling to get the next iteration
     num_pts::Number
@@ -35,7 +36,7 @@ function get_sra_defaults()
     # Parameters shared between all iterations of SINDy model
     variable_names = ["x", "y", "z"]
     sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
-    sindy_terms_list = calc_permutations(6,3);
+    sindy_terms_list = Iterators.product(1:3,1:3,1:3)
     sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
     # Subsampling to get the next iteration
     num_pts = 1000;
@@ -70,6 +71,7 @@ end
 mutable struct sra_stateful_object
     is_saved::Bool
     parameters::sra_parameters
+    i::Number
     # Initial data and gradients
     ts
     tspan
@@ -99,6 +101,7 @@ function sra_stateful_object(ts, tspan, dat, u0, numerical_grad)
     return sra_stateful_object(
         false,
         get_sra_defaults(),
+        0, # i.e. uninitialized
         ts, tspan, dat, u0, numerical_grad,
         [], [], [], [], [], [], [],
         nothing, nothing, nothing, nothing, nothing, nothing, nothing

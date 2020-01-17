@@ -66,7 +66,9 @@ dat_naive = Array(solve(prob, Tsit5(), saveat=ts))
 sindy_library = Dict("constant"=>nothing);
 chain_unctr, best_sindy_unctr = calc_distribution_of_models(
     dat, numerical_grad, sindy_library,
-    val_list = calc_permutations(3,2)
+    # val_list = calc_permutations(3,2)
+    # val_list = combinations(1:3, 2)
+    val_list = Iterators.product(1:3,1:3) # DEBUG
 )
 
 # plot(chain_unctr)
@@ -99,7 +101,9 @@ chain_ctr, best_sindy_ctr = calc_distribution_of_models(
     dat[:,subsample_ind],
     numerical_grad[:,subsample_ind],
     sindy_library,
-    val_list = calc_permutations(3,2),
+    val_list = Iterators.product(1:3,1:3), # DEBUG
+    # val_list = combinations(1:3, 2),
+    # val_list = calc_permutations(3,2),
     chain_opt = (iterations=300, train_ind=1:num_pts)
 )
 
@@ -116,7 +120,9 @@ plot(ctr_final', label="Learned", lw=3, color=:black)
     plot!(U_true', label="True")
 
 # Get the actually controlled model
-val_list = calc_permutations(3,2)
+# val_list = calc_permutations(3,2)
+# val_list = combinations(1:3, 2)
+val_list = Iterators.product(1:31:3) # DEBUG
 (final_sindy_model,best_criterion,all_criteria,_, _) =
      sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                      U=ctr_final, ts=ts,

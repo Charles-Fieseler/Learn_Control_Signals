@@ -58,7 +58,9 @@ plot(ts,dat[1,:]);plot!(ts,dat[2,:]);plot!(ts,dat[3,:])
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 
 # Upgrade: Use AIC
-val_list = calc_permutations(5,3)
+# val_list = calc_permutations(5,3)
+# val_list = combinations(1:5, 3)
+val_list = Iterators.product(1:3,1:3,1:3) # DEBUG
 (sindy_unctr,best_criterion,all_criteria,all_models) =
     sindyc_ensemble(dat, numerical_grad, sindy_library, val_list,
                     selection_criterion=my_aicc,
@@ -114,7 +116,9 @@ i = 3;
     plot!(U_true[i,:], label="Control Signal")
 
 # Better SINDy model
-val_list = calc_permutations(7,3)
+# val_list = calc_permutations(7,3)
+# val_list = combinations(1:5, 3)
+val_list = Iterators.product(1:3,1:3,1:3) # DEBUG
 (sindy_sub,best_criterion,all_criteria,all_models,best_index) =
     sindyc_ensemble(dat_sub, grad_sub, sindy_library, val_list,
                     selection_criterion=my_aicc,

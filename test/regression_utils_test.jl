@@ -59,7 +59,9 @@ i = 2
 @test length(get_nonzero_terms(all_models[i])) == size(dat,1)*val_list[i]
 
 # Permutations
-val_list = calc_permutations(5,3)
+# val_list = calc_permutations(5,3)
+# val_list = combinations(1:5, 3)
+val_list = Iterators.product(1:3,1:3,1:3) # DEBUG
 (best_model,best_criterion,all_criteria,all_models) =
     make_ensemble(val_list)
 

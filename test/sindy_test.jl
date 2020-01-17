@@ -25,9 +25,11 @@ terms = calc_augmented_data(dat, library_functions)
 
 @test size(terms,1) == length(named_terms)
 
-@test terms[1:3,:] == dat
-@test terms[4,:] == ones(size(dat,2))
-@test terms[5:10,:] == calc_cross_terms(dat, 2)
+@testset "Data Augmentation" begin
+    @test terms[1:3,:] == dat
+    @test terms[4,:] == ones(size(dat,2))
+    @test terms[5:10,:] == calc_cross_terms(dat, 2)
+end;
 
 # Type tests
 @test typeof(test_model) <: sindyc_model

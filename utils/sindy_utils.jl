@@ -50,6 +50,10 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     n, m = size(X)
     library = convert_string2function(library)
     X_augmented = calc_augmented_data(X, library)
+    condition_number = LinearAlgebra.cond(X_augmented)
+    if condition_number > 1e5
+        @warn("Very large condition number detected ($condition_number); SINDy algorithm may be unstable")
+    end
     if !use_lasso
         # i.e. is a dense model
         A, B = dmdc(X_augmented, X_grad, U)

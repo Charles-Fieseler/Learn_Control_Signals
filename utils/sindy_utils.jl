@@ -1,4 +1,5 @@
 using Interpolations, DataStructures, Lasso, DataFrames, Flux
+using LinearAlgebra: cond
 # include("../src/sindyc.jl")
 # include("../src/dmdc.jl");
 # include("../utils/combinatorics_utils.jl");
@@ -50,7 +51,7 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     n, m = size(X)
     library = convert_string2function(library)
     X_augmented = calc_augmented_data(X, library)
-    condition_number = LinearAlgebra.cond(X_augmented)
+    condition_number = cond(X_augmented);
     if condition_number > 1e5
         @warn("Very large condition number detected ($condition_number); SINDy algorithm may be unstable")
     end

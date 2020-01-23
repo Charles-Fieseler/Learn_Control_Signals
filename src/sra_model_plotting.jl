@@ -134,4 +134,5 @@ end
 
 ##### Export
 export plot_data, plot_data_and_control, plot_subsampled_points,
-    plot_sindy_model, print_current_equations, print_true_equations
+    plot_sindy_model, print_current_equations, print_true_equations,
+    plot_subsampled_derivatives

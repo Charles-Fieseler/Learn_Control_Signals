@@ -1,7 +1,7 @@
 # Plotting the data structure for the state of an SRA analysis
 #   See also: sra_model_object.jl for the saved states
 #   See also: sra_model_plotting.jl for plotting methods
-
+include("../utils/main_algorithm_utils.jl")
 
 #####
 ##### Model fitting
@@ -99,7 +99,7 @@ plot_subsampled_points
 function calculate_subsampled_ind(m::sra_stateful_object)
     p = m.parameters
     if !m.parameters.use_turing
-        sindy_grad = m.sindy_model(dat, 0)
+        sindy_grad = m.sindy_model(m.dat, 0)
         residual = m.numerical_grad .- sindy_grad
         # TODO: don't hardcode the index here
         noise_guess = p.noise_factor*abs(median(residual[1,:])) # Really should use Turing here

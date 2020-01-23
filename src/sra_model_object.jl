@@ -2,11 +2,12 @@
 # Core data structure for the state of an SRA analysis
 #   See also: sra_model_plotting.jl for plotting methods
 #   See also: sra_model_function.jl for the analysis steps
+include("../utils/sindy_statistics_utils.jl")
 
 #####
 ##### Helper structure, for the analysis parameters
 #####
-struct sra_parameters
+mutable struct sra_parameters
     debug_mode::Bool
     debug_folder::String
     # Initial, naive model
@@ -35,7 +36,7 @@ function get_sra_defaults()
     noise_factor = 1.0;
     # Parameters shared between all iterations of SINDy model
     variable_names = ["x", "y", "z"]
-    sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
+    sindy_library = Dict("cross_terms"=>[2],"constant"=>nothing);
     sindy_terms_list = Iterators.product(1:3,1:3,1:3)
     sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
     # Subsampling to get the next iteration

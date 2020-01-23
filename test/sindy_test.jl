@@ -8,7 +8,7 @@ include("../examples/example_lorenz.jl")
 dat = Array(solve_lorenz_system())
 numerical_grad = numerical_derivative(dat, ts)
 
-# SINDY tests
+# SINDY tests: up to squared terms
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
@@ -39,3 +39,24 @@ t1 = get_nonzero_terms(test_model)
 t2 = get_nonzero_terms(core_dyn_true)
 
 @test issubset(t2, t1)
+
+
+
+# SINDY tests: up to cubed terms
+
+# Generate test data: Van der Pol
+include("../examples/example_vanDerPol.jl")
+dat = Array(solve_vdp_system())
+numerical_grad = numerical_derivative(dat, ts)
+
+
+sindy_library = Dict("cross_terms"=>[2,3],
+                    "constant"=>nothing);
+test_model2 = sindyc(dat, numerical_grad, nothing, ts,
+                        library=sindy_library,
+                        use_lasso=true,
+                        var_names=["x", "y"])
+
+named_terms = build_term_names(test_model2)
+@test named_terms ==
+    ["x", "y", "", "xx", "xy", "yy", "xxx", "xxy", "xyy", "yyy"]

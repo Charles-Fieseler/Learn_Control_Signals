@@ -32,10 +32,15 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 hard_threshold=nothing,
                 quantile_threshold=0.1,
                 num_terms=nothing,
-                var_names=["x", "y", "z"])
+                var_names=nothing)
                 #TODO: allow custom library functions
     if X_grad == nothing
         X_grad = numerical_derivative(X)
+    end
+    if var_names == nothing
+        # TODO: default names for more variables
+        default_names = ["x", "y", "z", "z2", "z3"]
+        var_names = default_names[1:size(X,1)]
     end
     if ts == nothing
         ts = range(0, 1, length=size(X,2))
@@ -203,8 +208,18 @@ end
 
 """
 Calculates higher powers of individual rows of X, AND cross terms
+    NOT cumulative, but a vector can be passed for 'order'
 """
 function calc_cross_terms(X, order)
+    if order isa Vector
+        # Call recursively
+        cross_terms = calc_cross_terms(X, order[1])
+        for i in 2:length(order)
+            this_cross_terms = calc_cross_terms(X, order[i])
+            cross_terms = vcat(cross_terms, this_cross_terms)
+        end
+        return cross_terms
+    end
     if ndims(X) == 1
         X = reshape(X, (length(X), 1))
     end

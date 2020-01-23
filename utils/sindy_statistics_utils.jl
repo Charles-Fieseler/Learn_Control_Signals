@@ -91,11 +91,14 @@ Loop over several values of sparsity and choose the best model via
     Also returns all the sparsity values and all the models
 """
 function sindyc_ensemble(X, X_grad, library, val_list;
-                U=nothing, ts=ts,
+                U=nothing, ts=nothing,
                 selection_criterion=my_aic,
                 selection_dist=Normal(),
                 sparsification_mode="quantile",
                 use_clustering_minimization=false)
+    if ts == nothing
+        ts = 1:size(X,2)
+    end
     n = length(val_list)
     all_models = Vector(undef, n)
     all_criteria = zeros(n)
@@ -147,7 +150,6 @@ An options struct to make it easier to call sindyc_ensemble
 """
 function get_sindyc_ensemble_parameters()
     return Dict(:U=>nothing,
-        :ts=>ts, # TODO: takes ts from the current scope
         :selection_criterion=>my_aicc,
         :selection_dist=>Normal(),
         :sparsification_mode=>"num_terms", # NOTE: different from raw object above

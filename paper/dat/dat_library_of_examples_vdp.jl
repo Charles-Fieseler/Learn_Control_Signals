@@ -17,8 +17,9 @@ include(EXAMPLE_FOLDERNAME*"example_vanDerPol.jl")
 # Define the multivariate forcing function
 num_ctr = 3;
     U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0.6;
-    amplitude = 100.0
+    U_widths = 0.2;
+    # U_widths = 0;
+    amplitude = 2.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
                         F_dim=1,
@@ -35,24 +36,31 @@ for (i, t) in enumerate(ts)
     U_true[:,i] = my_U_func_time2(t)
 end
 
+## Also get baseline true/ideal cases
+# Uncontrolled
+dat_raw = Array(solve_vdp_system())
+numerical_grad_raw = numerical_derivative(dat_raw, ts)
+true_grad_raw = zeros(size(dat))
+
 # Intialize truth object
-this_truth = sra_truth_object(true_grad, U_true, core_dyn_true)
+this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 
 #####
 ##### Build SRA object and analyze
 #####
 # Initialize
 this_model = sra_stateful_object(ts, tspan, dat, u0, numerical_grad)
-p = this_model.parameters
-p.sindyc_ensemble_parameters[:selection_criterion] =
+prams = this_model.parameters
+prams.sindyc_ensemble_parameters[:selection_criterion] =
     sindy_cross_validate;
 # Several changes are required because there are only 2 variables here
 # p.sindyc_ensemble_parameters[:variable_names] = ["x", "y"];
-p.variable_names = ["x", "y"];
-p.sindy_terms_list = Iterators.product(1:3, 1:3)
-p.sindy_library["cross_terms"] = [2, 3] # Also include cubic terms
+prams.variable_names = ["x", "y"];
+prams.sindy_terms_list = Iterators.product(1:3, 1:3)
+prams.sindy_library["cross_terms"] = [2, 3] # Also include cubic terms
 
-fit_first_model(this_model, 100);
+fit_first_model(this_model, 30);
+print_true_equations(this_truth)
 print_current_equations(this_model)
 
 #################################################################
@@ -60,11 +68,19 @@ print_current_equations(this_model)
 calculate_subsampled_ind(this_model);
 all_models = fit_model(this_model);
 
-# println("Iteration $i")
-print_current_equations(this_model)
 print_true_equations(this_truth)
+print_current_equations(this_model)
 
-plot_subsampled_points(this_model)
+# plot_subsampled_points(this_model)
 # plot_subsampled_simulation(this_model, 2)
-plot_subsampled_derivatives(this_model, 1)
-plot_residual(this_model)
+# plot_subsampled_derivatives(this_model, 1)
+# plot_residual(this_model)
+
+# plot_subsampled_points_and_control(this_model, this_truth)
+
+#####
+##### Save Van der Pol data
+#####
+this_dat_name = "TMP_dat_library_of_examples_vdp_"
+
+save_for_plotting(this_model, this_truth, this_dat_name)

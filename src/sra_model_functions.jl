@@ -36,6 +36,7 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
                 m.numerical_grad,
                 p.sindy_library,
                 p.sindy_terms_list;
+                var_names=p.variable_names,
                 ensemble_p...)
     m.sindy_model = sindy_model
     m.ensemble_sindy_criteria = all_criteria
@@ -73,6 +74,7 @@ function fit_model(m::sra_stateful_object)
                 m.numerical_grad[:, m.subsample_ind],
                 p.sindy_library,
                 p.sindy_terms_list;
+                var_names=p.variable_names,
                 ensemble_p...)
     # These overwrite the previous step, which has been saved
     m.sindy_model = sindy_model

@@ -95,7 +95,8 @@ function sindyc_ensemble(X, X_grad, library, val_list;
                 selection_criterion=my_aic,
                 selection_dist=Normal(),
                 sparsification_mode="quantile",
-                use_clustering_minimization=false)
+                use_clustering_minimization=false,
+                var_names=nothing)
     if ts == nothing
         ts = 1:size(X,2)
     end
@@ -106,12 +107,14 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     make_model(x) = if sparsification_mode == "quantile"
         sindyc(X, X_grad, U; library=library,
                                 use_lasso=true,
-                                quantile_threshold=x)
+                                quantile_threshold=x,
+                                var_names=var_names)
     elseif sparsification_mode == "num_terms"
         sindyc(X, X_grad, U, ts; library=library,
                                 use_lasso=true,
                                 quantile_threshold=nothing,
-                                num_terms=x)
+                                num_terms=x,
+                                var_names=var_names)
     else
         error("Unknown sparsification mode")
     end

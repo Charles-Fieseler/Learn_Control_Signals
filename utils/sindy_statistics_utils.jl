@@ -117,7 +117,7 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     end
 
     for (i, val) in enumerate(val_list)
-        m = make_model(val)
+        m = make_model(val) # Defined above with if statement
         all_criteria[i] = selection_criterion(m,
                 X, X_grad, dist=selection_dist)
         all_models[i] = m

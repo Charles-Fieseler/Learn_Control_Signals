@@ -124,12 +124,17 @@ function plot_library(this_dat_name, this_fig_name, system_name="";
 
         ### PLOTS
         ## 1: Attractor view (uncontrolled)
-        plot_raw = plot3d(dat_raw[1, :], dat_raw[2, :], dat_raw[3, :],
-                color=COLOR_DICT["data_uncontrolled"], lw=4,
-                #zlabel=system_name, guidefontsize=24, mirror=true
-                ;plot_opt...);
-                title!(system_name)
-                # zlabel!(system_name, guidefontsize=24);
+        if size(dat_raw,1) == 3
+                plot_raw = plot3d(dat_raw[1, :], dat_raw[2, :], dat_raw[3, :],
+                        color=COLOR_DICT["data_uncontrolled"], lw=4,
+                        #zlabel=system_name, guidefontsize=24, mirror=true
+                        ;plot_opt...);
+        elseif size(dat_raw,1) == 2
+                plot_raw = plot(dat_raw[1, :], dat_raw[2, :],
+                        color=COLOR_DICT["data_uncontrolled"], lw=4,
+                        ;plot_opt...);
+        end
+        title!(system_name)
 
         ## 2: 1d time series (controlled)
         ind = plot_ind;
@@ -158,10 +163,17 @@ function plot_library(this_dat_name, this_fig_name, system_name="";
         controlled_ind = 1:5000;
             ind = controlled_ind;
         let d = dat_ctr
-            global plot_reconstruction = plot3d(
+            if size(dat_ctr,1) == 3
+                    global plot_reconstruction = plot3d(
                         d[1, ind], d[2, ind], d[3, ind],
                         color=COLOR_DICT["model_controlled"], alpha=0.8, lw=3;
                         plot_opt...);
+            elseif size(dat_ctr,1) == 2
+                    global plot_reconstruction = plot(
+                        d[1, ind], d[2, ind],
+                        color=COLOR_DICT["model_controlled"], alpha=0.8, lw=3;
+                        plot_opt...);
+            end
         end;
 
         ##
@@ -188,4 +200,17 @@ plot_final = plot_library(this_dat_name, this_fig_name, "Rossler",
                 plot_coordinate=3)
 
 fname = this_fig_name * "rossler.png";
+savefig(plot_final, fname)
+
+
+#####
+##### Van der Pol oscillator
+#####
+this_dat_name = DAT_FOLDERNAME*"dat_library_of_examples_vdp_";
+this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";
+plot_final = plot_library(this_dat_name, this_fig_name, "vdp",
+                plot_ind=1001:2000,
+                plot_coordinate=1)
+
+fname = this_fig_name * "vanDerPol.png";
 savefig(plot_final, fname)

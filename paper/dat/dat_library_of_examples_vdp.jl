@@ -81,6 +81,6 @@ print_current_equations(this_model)
 #####
 ##### Save Van der Pol data
 #####
-this_dat_name = "TMP_dat_library_of_examples_vdp_"
+this_dat_name = "dat_library_of_examples_vdp_"
 
 save_for_plotting(this_model, this_truth, this_dat_name)

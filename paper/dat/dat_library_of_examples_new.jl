@@ -8,9 +8,9 @@ include("../../utils/sindy_turing_utils.jl")
 include("../../utils/sindy_statistics_utils.jl")
 include("../../utils/main_algorithm_utils.jl")
 
-include("../../src/sra_model_object.jl");
-include("../../src/sra_model_functions.jl");
-include("../../src/sra_model_plotting.jl");
+# include("../../src/sra_model_object.jl");
+# include("../../src/sra_model_functions.jl");
+# include("../../src/sra_model_plotting.jl");
 
 ################################################################################
 #####

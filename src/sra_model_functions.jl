@@ -2,6 +2,8 @@
 #   See also: sra_model_object.jl for the saved states
 #   See also: sra_model_plotting.jl for plotting methods
 include("../utils/main_algorithm_utils.jl")
+include("../paper/scripts/paper_settings.jl");
+using BSON: @save
 
 #####
 ##### Model fitting
@@ -22,7 +24,7 @@ print_true_equations
 Expectation: this model will not be very good!
 """
 function fit_first_model(m::sra_stateful_object, initial_noise)
-    # TODO: move to parameter object
+    # TODO: move noise level to parameter object
     p = m.parameters
     # Change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
@@ -67,8 +69,8 @@ function fit_model(m::sra_stateful_object)
     # Same
     (sindy_model,best_criterion,all_criteria,all_models) =
         sindyc_ensemble(
-                m.dat,
-                m.numerical_grad,
+                m.dat[:, m.subsample_ind],
+                m.numerical_grad[:, m.subsample_ind],
                 p.sindy_library,
                 p.sindy_terms_list;
                 ensemble_p...)
@@ -119,6 +121,9 @@ function calculate_subsampled_ind(m::sra_stateful_object)
         tmp_noise_factor *= 1.5;
     end
 
+    if length(accepted_ind) < p.num_pts+p.start_ind-1
+        error("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
+    end
     m.subsample_ind = accepted_ind[p.start_ind:p.num_pts+p.start_ind-1]
     m.noise_guess = noise_guess
 end
@@ -164,6 +169,51 @@ function simulate_model(m::sra_stateful_object)
 end
 
 
+"""
+Calculates the residual of the data and the current model
+"""
+function calc_residual(m::sra_stateful_object)
+    sindy_grad = m.sindy_model(m.dat, 0)
+    residual = m.numerical_grad .- sindy_grad
+    return residual
+end
+
+
+"""
+Saves the data in a standardized format in four different files
+
+Note: requires the paper_settings.jl file to specify the DAT_FOLDERNAME variable
+
+Usage:
+save_for_plotting(m::sra_stateful_object,
+                t::sra_truth_object,
+                this_dat_name="test")
+"""
+function save_for_plotting(m::sra_stateful_object,
+                            t::sra_truth_object,
+                            this_dat_name="test")
+    this_dat_name = DAT_FOLDERNAME*this_dat_name;
+
+    dat_raw = t.dat_raw
+    fname = this_dat_name*"uncontrolled.bson"
+    @save fname dat_raw
+
+    dat, U_true = m.dat, t.U_true
+    fname = this_dat_name*"ode_vars.bson";
+    @save fname dat U_true
+
+    noise_guess, accepted_ind = m.noise_guess, m.subsample_ind
+    residual = calc_residual(m)
+    fname = this_dat_name*"naive_vars_bayes.bson";
+    @save fname noise_guess residual accepted_ind #ctr_guess
+
+    dat_ctr = simulate_model(m)
+    ctr_guess2 = process_residual(residual, noise_guess) # TODO: should be Bayesian
+    fname = this_dat_name*"ctr_vars_sindy.bson";
+    @save fname dat_ctr ctr_guess2 #sindy_grad_ctr
+end
+
 ##### Export
 export fit_first_model, fit_model, calculate_subsampled_ind,
-    save_model_variables, simulate_model
+    save_model_variables, simulate_model, save_for_plotting,
+    calc_residual

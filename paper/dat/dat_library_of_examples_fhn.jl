@@ -25,7 +25,7 @@ my_U_func_time2(t) = U_func_time(t, u0,
                         amplitude=amplitude)
 
 # Get data
-sol = solve_vdp_system(U_func_time=my_U_func_time2)
+sol = solve_fhn_system(U_func_time=my_U_func_time2)
 dat = Array(sol)
 numerical_grad = numerical_derivative(dat, ts)
 true_grad = core_dyn_true(dat)
@@ -35,8 +35,14 @@ for (i, t) in enumerate(ts)
     U_true[:,i] = my_U_func_time2(t)
 end
 
+## Also get baseline true/ideal cases
+# Uncontrolled
+dat_raw = Array(solve_vdp_system())
+numerical_grad_raw = numerical_derivative(dat_raw, ts)
+true_grad_raw = zeros(size(dat))
+
 # Intialize truth object
-this_truth = sra_truth_object(true_grad, U_true, core_dyn_true)
+this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 
 #####
 ##### Build SRA object and analyze
@@ -65,7 +71,7 @@ print_true_equations(this_truth)
 print_current_equations(this_model)
 
 plot_subsampled_points(this_model)
-# plot_subsampled_simulation(this_model, 2)
+plot_subsampled_simulation(this_model, 2)
 plot_subsampled_derivatives(this_model, 1)
 plot_residual(this_model)
 

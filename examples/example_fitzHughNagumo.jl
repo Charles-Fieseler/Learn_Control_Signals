@@ -10,7 +10,7 @@ function fhn_system(du, u, p, t;
                      U_func_space=U_func_space_trivial)
     Ft = U_func_time(t)
     Fs = U_func_space(u)
-    a, b, I_external = p[1]
+    a, b, I_external = p
     v, ω = u
 
     du[1] = v - (v^3)/3 - ω + I_external
@@ -54,7 +54,7 @@ end
 #####
 ##### True model in SINDy syntax
 #####
-[a, b, I] = p
+a, b, I = p
 #      x  y  c  xx xy yy xxx  xxy xyy yyy
  A = [[1 -1  I  0  0  0  -1/3 0   0   0];
       [1 -b  a  0  0  0  0    0   0   0]]

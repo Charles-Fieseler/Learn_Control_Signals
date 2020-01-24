@@ -60,6 +60,7 @@ end
 ##### Helper structure, for the true values
 #####
 struct sra_truth_object
+    dat_raw::Array # Uncontrolled data
     true_grad::Array
     U_true
     core_dyn_true

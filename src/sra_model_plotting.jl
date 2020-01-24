@@ -9,7 +9,7 @@
 function plot_data(m::sra_stateful_object)
     names = m.sra_parameters
     plot(m.ts,m.dat[1,:], label=names[1]);
-    for i = 2:size(dat,1)
+    for i = 2:size(m.dat,1)
         plot!(m.ts,m.dat[i,:], label=names[i]);
     end
     title!("Raw data")
@@ -42,6 +42,21 @@ function plot_data_and_control(m::sra_stateful_object,
     plot_data(m)
     plot!(m.ts, t.U_true, label="True control")
     title!("Data and controller")
+end
+
+function plot_data_and_control(m::sra_stateful_object,
+            t::sra_truth_object, which_dim=1)
+    plot_data(m, which_dim)
+    plot!(m.ts, t.U_true[which_dim,:], label="True control")
+    title!("Data and controller (Variable $which_dim)")
+end
+
+function plot_subsampled_points_and_control(m::sra_stateful_object,
+            t::sra_truth_object, which_dim=1)
+    plot_data_and_control(m, t, which_dim)
+    dat_sub = m.dat[:, m.subsample_ind]
+    scatter!(m.ts[m.subsample_ind], dat_sub[which_dim,:], color=:blue)
+    title!("Subsampled points plotted on data (Variable $which_dim)")
 end
 
 #####
@@ -99,8 +114,7 @@ end
 
 function plot_residual(m::sra_stateful_object, which_dim=1)
     # TODO: This has to recalculate the residual
-    sindy_grad = m.sindy_model(dat, 0)
-    residual = m.numerical_grad .- sindy_grad
+    residual = calc_residual(m)
 
     plot(residual[which_dim,:], label="Residual")
     hline!([m.noise_guess], label="Noise line");
@@ -135,4 +149,5 @@ end
 ##### Export
 export plot_data, plot_data_and_control, plot_subsampled_points,
     plot_sindy_model, print_current_equations, print_true_equations,
-    plot_subsampled_derivatives
+    plot_subsampled_derivatives, plot_residual,
+    plot_subsampled_points_and_control, plot_subsampled_simulation

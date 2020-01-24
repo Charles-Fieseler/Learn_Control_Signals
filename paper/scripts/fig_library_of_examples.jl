@@ -208,9 +208,22 @@ savefig(plot_final, fname)
 #####
 this_dat_name = DAT_FOLDERNAME*"dat_library_of_examples_vdp_";
 this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";
-plot_final = plot_library(this_dat_name, this_fig_name, "vdp",
+plot_final = plot_library(this_dat_name, this_fig_name, "Van der Pol",
                 plot_ind=1001:2000,
                 plot_coordinate=1)
 
 fname = this_fig_name * "vanDerPol.png";
+savefig(plot_final, fname)
+
+
+#####
+##### Van der Pol oscillator
+#####
+this_dat_name = DAT_FOLDERNAME*"dat_library_of_examples_fhn_";
+this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";
+plot_final = plot_library(this_dat_name, this_fig_name, "FitzHugh Nagumo",
+                plot_ind=1001:2000,
+                plot_coordinate=1)
+
+fname = this_fig_name * "fitzHughNagumo.png";
 savefig(plot_final, fname)

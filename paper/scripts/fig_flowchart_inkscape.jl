@@ -65,7 +65,7 @@ let d = sindy_dat_unctr
                 plot_opt...)
 end
     plot!(dat[1, ind], color=COLOR_DICT["true"], lw=4)
-    ylabel!("dX/dt", guidefontsize=34)
+    ylabel!("X", guidefontsize=34)
     title!("Naive Model")
 let d = sindy_dat_unctr
     global plot_uncontrolled2 = plot(d[2, ind],

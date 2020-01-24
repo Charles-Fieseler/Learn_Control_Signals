@@ -45,8 +45,8 @@ plot_opt = Dict(:titlefontsize=>28,
 ## 1: Attractor view (uncontrolled)
 plot_raw = plot3d(dat_raw[1, :], dat_raw[2, :], dat_raw[3, :],
         color=COLOR_DICT["data_uncontrolled"], lw=4; plot_opt...)
-        xlabel!("Lorenz");
-        title!("Attractor")
+        # xlabel!("Lorenz");
+        title!("Lorenz")
 
 ## 2: 1d time series (controlled)
 plot_coordinate = 1;
@@ -95,7 +95,7 @@ plot_final = plot(
         plot_raw, plot_1d, #plot_ctr_true,
         plot_residual1, plot_ctr_guess, plot_ctr_true, plot_reconstruction,
         layout=lay)
-plot!(size=(2000, 400))
+plot!(size=(2000, 250))
 fname = this_fig_name * "lorenz.png";
 savefig(plot_final, fname)
 
@@ -185,7 +185,7 @@ function plot_library(this_dat_name, this_fig_name, system_name="";
                 plot_raw, plot_1d, #plot_ctr_true,
                 plot_residual1, plot_ctr_guess, plot_ctr_true, plot_reconstruction,
                 layout=lay)
-        plot!(size=(2000, 400))
+        plot!(size=(2000, 250))
 
         return plot_final
 end

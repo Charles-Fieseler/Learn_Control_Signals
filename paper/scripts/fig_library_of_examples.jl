@@ -118,7 +118,7 @@ function plot_library(this_dat_name, this_fig_name, system_name="";
         fname = this_dat_name*"ode_vars.bson";
         @load fname dat U_true
         fname = this_dat_name*"naive_vars_bayes.bson";
-        @load fname dat_unctr noise_guess residual accepted_ind #ctr_guess
+        @load fname noise_guess residual accepted_ind #ctr_guess
         fname = this_dat_name*"ctr_vars_sindy.bson";
         @load fname dat_ctr ctr_guess2 #sindy_grad_ctr
 

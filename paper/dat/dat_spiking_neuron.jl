@@ -1,5 +1,6 @@
 using PkgSRA
-using Plots, Random, Distributions, Interpolations
+using Plots
+#Random, Distributions, Interpolations
 using StatsBase, StatsPlots
 pyplot()
 Random.seed!(11)

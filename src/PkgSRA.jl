@@ -1,12 +1,16 @@
 module PkgSRA
 
     ## Base
-    using DiffEqFlux, OrdinaryDiffEq, Flux, Turing, Random
+    using OrdinaryDiffEq, Turing, Random
     ## For derivatives
     using DSP, Statistics
     ## General
     using Plots, StatsPlots, BSON
     using DataStructures
+    ## Examples
+    using Interpolations, StatsBase, Statistics
+    ## Sindy-specific
+    using Lasso
 
     # Core numerical algorithms with control
     include("numerical_derivatives.jl")

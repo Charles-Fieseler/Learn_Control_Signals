@@ -12,16 +12,16 @@ this_dat_name = DAT_FOLDERNAME*"dat_neuron_"
 ## Basic spiking model
 # Raw data
 fname = this_dat_name*"raw.bson";
-@load fname dat grad_true numerical_grad U_true
+@load fname dat numerical_grad #grad_true U_true
 
 # Controlled model
 fname = this_dat_name*"controlled_model.bson";
-@load fname ctr_final 
+@load fname ctr_final
 
 ## Spikes with varying input
 # Raw data
 fname = this_dat_name*"raw2.bson";
-@load fname dat2 grad_true2 numerical_grad2 U_true2
+@load fname dat2 numerical_grad2 U_true2 #grad_true2
 
 # Controlled model
 fname = this_dat_name*"controlled_model2.bson";

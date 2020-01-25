@@ -18,7 +18,7 @@ fname = this_dat_name*"ode_vars.bson";
 
 # Bayesian variables 1: before control
 fname = this_dat_name*"naive_vars_sindy.bson";
-@load fname sindy_dat_unctr sindy_unctr
+@load fname sindy_dat_unctr #sindy_unctr
 
 # Bayesian variables 1: before control
 fname = this_dat_name*"naive_vars_bayes.bson";
@@ -26,7 +26,7 @@ fname = this_dat_name*"naive_vars_bayes.bson";
 
 # SINDY variables 2: after control
 fname = this_dat_name*"ctr_vars_sindy.bson";
-@load fname sindy_sub sindy_dat_ctr sindy_grad_ctr
+@load fname sindy_dat_ctr sindy_grad_ctr #sindy_sub
 
 # Bayesian variables 2: after control
 fname = this_dat_name*"ctr_vars_turing.bson";
@@ -49,11 +49,11 @@ fname = this_fig_name * "uncontrolled.png";
 savefig(plot_raw, fname)
 
 ## 1:  3d example plot: data
-plot_data = plot3d(dat[1, :], dat[2, :], dat[3, :],
+plot_attractor = plot3d(dat[1, :], dat[2, :], dat[3, :],
         color=COLOR_DICT["true"], lw=3; plot_opt...)
         title!("Perturbed Data")
 fname = this_fig_name * "data.png";
-savefig(plot_data, fname)
+savefig(plot_attractor, fname)
 
 ## 2: Two 1d example plots: naive model
 uncontrolled_ind = 1:500;

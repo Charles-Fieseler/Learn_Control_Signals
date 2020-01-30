@@ -37,15 +37,15 @@ function plot_true_grads(m::sra_stateful_object,
     plot!(m.ts, m.numerical_grad[which_dim,:], label="Numerical gradient")
 end
 
-function plot_data_and_control(m::sra_stateful_object,
-            t::sra_truth_object)
-    plot_data(m)
-    plot!(m.ts, t.U_true, label="True control")
-    title!("Data and controller")
-end
+# function plot_data_and_control(m::sra_stateful_object,
+#             t::sra_truth_object)
+#     plot_data(m)
+#     plot!(m.ts, t.U_true, label="True control")
+#     title!("Data and controller")
+# end
 
 function plot_data_and_control(m::sra_stateful_object,
-            t::sra_truth_object, which_dim=1)
+            t::sra_truth_object; which_dim=1)
     plot_data(m, which_dim)
     plot!(m.ts, t.U_true[which_dim,:], label="True control")
     title!("Data and controller (Variable $which_dim)")

@@ -1,5 +1,6 @@
 using PkgSRA
 using Plots
+using Random
 #Random, Distributions, Interpolations
 using StatsBase, StatsPlots
 pyplot()

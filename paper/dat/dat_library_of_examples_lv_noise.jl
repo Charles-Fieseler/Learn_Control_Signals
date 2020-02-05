@@ -1,5 +1,6 @@
 using PkgSRA
 using Plots, Random, Distributions, Interpolations
+using StatsPlots
 pyplot()
 Random.seed!(11)
 using BSON: @save
@@ -49,12 +50,12 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 ##### Loop over additive noise
 #####
 
-noise_vals = [0, 0.05, 0.1]
+noise_vals = [0, 0]
 # noise_factor = norm(numerical_grad)
 # noise_factor = 1;
 # noise_vals .*= noise_factor
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
-num_models = 30
+num_models = 5
 all_err = zeros(length(noise_vals), num_models)
 
 
@@ -69,6 +70,7 @@ for (i,σ) in enumerate(noise_vals)
         prams.variable_names = ["x", "y"];
         prams.sindy_terms_list = Iterators.product(1:3, 1:3)
         prams.sindy_library["cross_terms"] = [2] # Also include cubic terms
+        prams.initial_subsampling = true
 
         fit_first_model(this_model, 30);
         print_true_equations(this_truth)
@@ -76,18 +78,27 @@ for (i,σ) in enumerate(noise_vals)
 
         #################################################################
         ### Iterate
-        calculate_subsampled_ind(this_model);
-        all_models = fit_model(this_model);
-
-        # print_true_equations(this_truth)
-        print_current_equations(this_model)
+        is_improved, max_iter = true, 10
+        while is_improved
+            calculate_subsampled_ind(this_model);
+            all_models, is_improved = fit_model(this_model);
+            is_improved && print_current_equations(this_model)
+            this_model.i > 10 && break
+        end
+        println("Finished with $(this_model.i) iterations")
 
         all_err[i, j] = calc_coefficient_error(this_model, this_truth)
+        println("Final error = $(all_err[i, j])")
+        println("")
     end
-    println("Finished")
+    println("Finished noise level $σ")
+    println("=====================================")
 end
 
+# boxplot(noise_vals, all_err')
+
 vec_err, std_err = mean_and_std(all_err, 2)
+# vec_err, std_err = mean_and_std(all_err)
 plot(noise_vals, vec_err, ribbon=std_err)
     xlabel!("Noise")
     ylabel!("Coefficient Error")

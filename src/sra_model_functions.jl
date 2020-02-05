@@ -12,6 +12,10 @@ using BSON: @save
 Step 1a: Fit a naive sindy model to the data
     Note: only called first time around
 
+fit_first_model(m::sra_stateful_object, initial_noise)
+Input:
+    initial_noise - the initial guess for the noise std
+
 Sensitive to parameters:
 noise_factor
 initial_subsampling
@@ -28,16 +32,31 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
     p = m.parameters
     # Change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
-    # ensemble_p._replace(selection_dist=Normal(0.0, initial_noise))
     ensemble_p[:selection_dist] = Normal(0.0, initial_noise)
-    (sindy_model,best_criterion,all_criteria,all_models) =
-        sindyc_ensemble(
-                m.dat,
-                m.numerical_grad,
-                p.sindy_library,
-                p.sindy_terms_list;
-                var_names=p.variable_names,
-                ensemble_p...)
+
+    # Note: both of the branches call sindyc_ensemble
+    if p.initial_subsampling
+        println("Initial subsampling")
+        (out) = calc_best_random_subsample(m.dat,
+                                        m.numerical_grad,
+                                        p.sindy_library,
+                                        num_pts=1000, 
+                                        num_subsamples=20,
+                                        val_list = p.sindy_terms_list;
+                                        sindyc_ensemble_params=ensemble_p)
+        sindy_model = out[:best_model]
+        all_criteria = out[:all_errL2]
+        best_criterion = minimum(all_criteria)
+    else
+        (sindy_model,best_criterion,all_criteria,all_models) =
+            sindyc_ensemble(
+                    m.dat,
+                    m.numerical_grad,
+                    p.sindy_library,
+                    p.sindy_terms_list;
+                    var_names=p.variable_names,
+                    ensemble_p...)
+    end
     m.sindy_model = sindy_model
     m.ensemble_sindy_criteria = all_criteria
     m.best_sindy_criteria = best_criterion
@@ -56,13 +75,8 @@ print_current_equations
 print_true_equations
 plot_subsampled_derivatives
 plot_subsampled_simulation
-
-Expectation: this model will not be very good!
 """
 function fit_model(m::sra_stateful_object)
-    if !m.is_saved
-        save_model_variables(m)
-    end
     p = m.parameters
     # New: change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
@@ -76,14 +90,24 @@ function fit_model(m::sra_stateful_object)
                 p.sindy_terms_list;
                 var_names=p.variable_names,
                 ensemble_p...)
-    # These overwrite the previous step, which has been saved
-    m.sindy_model = sindy_model
-    m.sindy_dat = nothing # Reset
-    m.ensemble_sindy_criteria = all_criteria
-    m.best_sindy_criteria = best_criterion
-    m.is_saved = false
-    m.i += 1
-    return all_models # DEBUG
+    # Only save if this is an improvement!
+    if best_criterion < m.best_sindy_criteria
+        if !m.is_saved
+            save_model_variables(m)
+        end
+        # These overwrite the previous step, which has been saved
+        m.sindy_model = sindy_model
+        m.sindy_dat = nothing # Reset
+        m.ensemble_sindy_criteria = all_criteria
+        m.best_sindy_criteria = best_criterion
+        m.is_saved = false
+        m.i += 1
+        is_improved = true
+    else
+        println("Iteration $(m.i+1) did not improve the fit")
+        is_improved = false
+    end
+    return all_models, is_improved
 end
 
 

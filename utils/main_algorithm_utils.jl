@@ -127,13 +127,14 @@ return (best_initial_subsample=best_initial_subsample,
         all_errL2=all_errL2)
 """
 function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
-                                    num_pts=400,
-                                    num_subsamples=10,
-                                    val_list = Iterators.product(1:3,1:3)) # DEBUG
+                        num_pts=400,
+                        num_subsamples=10,
+                        val_list = Iterators.product(1:3,1:3),
+                        sindyc_ensemble_params=get_sindyc_ensemble_parameters())
     # Initially, randomly subsample the data
     initial_subsamples = []
     for i in 1:num_subsamples
-        push!(initial_subsamples, randperm(length(ts))[1:num_pts])
+        push!(initial_subsamples, randperm(size(dat2,2))[1:num_pts])
     end
 
     # Just do SINDY here, not Turing yet
@@ -141,17 +142,18 @@ function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
     all_final_models2 = Vector{sindyc_model}(undef,sz)
     all_errL2 = zeros(sz)
     for (i, inds) in enumerate(initial_subsamples)
-        (all_final_models2[i],_,_,_, _) =
+        (all_final_models2[i], all_errL2[i], _, _, _) =
              sindyc_ensemble(dat2[:,inds],
                              numerical_grad2[:, inds],
-                             sindy_library, val_list,
-                             selection_criterion=my_aicc,
-                             sparsification_mode="num_terms",
-                             selection_dist=Normal(0,10),
-                             use_clustering_minimization=true)
-        # Calculate full L2 error
-        this_dat = all_final_models2[i](dat2, 0)
-        all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+                             sindy_library, val_list;
+                             sindyc_ensemble_params...)
+        if sindyc_ensemble_params[:selection_criterion] == my_aicc
+            # Calculate real L2 error
+            this_dat = all_final_models2[i](dat2, 0)
+            all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+        else
+            # Should be cross validation; already L2 error
+        end
     end
 
     # Choose the best of the above models and subsamples

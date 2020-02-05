@@ -71,6 +71,8 @@ all_models = fit_model(this_model);
 print_true_equations(this_truth)
 print_current_equations(this_model)
 
+err = calc_coefficient_error(this_model, this_truth)
+
 # plot_subsampled_points(this_model)
 # plot_subsampled_simulation(this_model, 2)
 # plot_subsampled_derivatives(this_model, 1)

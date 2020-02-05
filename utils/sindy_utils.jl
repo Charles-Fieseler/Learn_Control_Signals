@@ -98,14 +98,14 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     end
 
     if U == nothing
-        model = sindyc_model(A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+        model = sindyc_model(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
                             library, var_names)
     else
         # TODO: make U_func work with multiple channels
         # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
         U_func = generate_map_rows_function(
                 (d)->CubicSplineInterpolation(ts,d), U)
-        model = sindyc_model(A, B, U, U_func,
+        model = sindyc_model(ts, A, B, U, U_func,
                             library, var_names )
     end
 
@@ -151,7 +151,7 @@ function print_equations(model::sindyc_model;
         end
         println("\b\b")
     end
-    println()
+    # println()
 end
 
 function get_nonzero_terms(model::sindyc_model; linear_indices=false)

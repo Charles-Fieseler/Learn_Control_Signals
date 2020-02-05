@@ -118,6 +118,8 @@ function sindy_from_chain(model_template::sindyc_model,
         #         nonzeros structure as the desired model!")
     end
 
+    ts = 1:length(model_template.U) # TODO: multidimensional U
+
     n_total = length(model_template.A)
     coef_sample = sample(chain, 2) # sample size of 1 gives error
     coef_vec = Array(coef_sample)[1,1:end-1] # Leave out noise
@@ -145,7 +147,7 @@ function sindy_from_chain(model_template::sindyc_model,
     end
     # Assume these parameters are the A matrix
     A = sindy_vec2mat(model_template, coef_vec)
-    new_model = sindyc_model(A,
+    new_model = sindyc_model(ts, A,
             model_template.B, model_template.U,
             model_template.U_func, model_template.library,
             model_template.variable_names)

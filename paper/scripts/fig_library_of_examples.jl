@@ -6,7 +6,7 @@ pyplot()
 include("paper_plotting.jl")
 
 #####
-##### Load LORENZ variables
+##### Load LORENZ variables (special top panel)
 #####
 include("paper_settings.jl")
 this_dat_name = DAT_FOLDERNAME*"TMP_dat_flowchart_inkscape_"
@@ -101,11 +101,8 @@ plot!(size=(2000, 250))
 fname = this_fig_name * "lorenz.png";
 savefig(plot_final, fname)
 
-
-
-
 #####
-##### ROSSLER
+##### Second, default-style panel: ROSSLER
 #####
 this_dat_name = DAT_FOLDERNAME*"TMP_dat_library_of_examples_rossler";
 this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";

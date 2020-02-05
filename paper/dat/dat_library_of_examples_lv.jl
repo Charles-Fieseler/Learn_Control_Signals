@@ -4,8 +4,8 @@ pyplot()
 Random.seed!(11)
 using BSON: @save
 include("../scripts/paper_settings.jl");
-include("../../utils/sindy_turing_utils.jl")
-include("../../utils/main_algorithm_utils.jl")
+# include("../../utils/sindy_turing_utils.jl")
+# include("../../utils/main_algorithm_utils.jl")
 include("../../utils/sindy_statistics_utils.jl")
 
 ################################################################################

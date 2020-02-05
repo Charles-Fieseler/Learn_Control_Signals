@@ -16,7 +16,7 @@ function lv_system(du, u, p, t;
 
     xy = x*y
     du[1] = α*x - β*xy
-    du[2] = δ*xy - gamma*y
+    du[2] = δ*xy - γ*y
 
     du .+= Ft .+ Fs
 end
@@ -47,7 +47,7 @@ function lv_system(u, p, t)
     x, y = u
 
     xy = x*y
-    du = [α*x - β*xy; δ*xy - gamma*y]
+    du = [α*x - β*xy; δ*xy - γ*y]
     return du
 end
 

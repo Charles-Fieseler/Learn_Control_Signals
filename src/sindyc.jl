@@ -3,6 +3,7 @@ using DataStructures
 ##### SINDYc model object and methods
 #####
 struct sindyc_model
+    ts::Vector
     # After fitting
     A::Matrix
     B::Matrix

@@ -93,6 +93,14 @@ end
 """
 Step 2: Subsample based on previous model residuals
 
+ calculate_subsampled_ind(m::sra_stateful_object,
+                        not_enough_pts_mode="error")
+
+Input:
+    not_enough_pts_mode
+        - if "error", then raises an error if not enough points
+        - if "warning", then raises a warning and uses all of the points
+
 Sensitive to parameters:
 noise_factor
 use_turing
@@ -100,7 +108,8 @@ use_turing
 See methods:
 plot_subsampled_points
 """
-function calculate_subsampled_ind(m::sra_stateful_object)
+function calculate_subsampled_ind(m::sra_stateful_object,
+                                not_enough_pts_mode="warning")
     p = m.parameters
     if !m.parameters.use_turing
         sindy_grad = m.sindy_model(m.dat, 0)
@@ -119,20 +128,26 @@ function calculate_subsampled_ind(m::sra_stateful_object)
         accepted_ind = subsample_using_residual(residual,
                     tmp_noise_factor*noise_guess, min_length=4);
         i += 1;
-        i > 10 && break
+        i > 20 && break
         tmp_noise_factor *= 1.5;
     end
 
     if length(accepted_ind) < p.num_pts+p.start_ind-1
-        error("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
+        if not_enough_pts_mode == "error"
+            error("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
+        else
+            @warn("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
+        end
+        m.subsample_ind = accepted_ind[p.start_ind:end]
+    else
+        m.subsample_ind = accepted_ind[p.start_ind:p.num_pts+p.start_ind-1]
     end
-    m.subsample_ind = accepted_ind[p.start_ind:p.num_pts+p.start_ind-1]
     m.noise_guess = noise_guess
 end
 
 
 #####
-##### Other steps
+##### Saving
 #####
 """
 Save current step for continuation
@@ -147,6 +162,27 @@ function save_model_variables(m::sra_stateful_object)
     pushfirst!(m.all_noise_guesses, m.noise_guess)
 
     m.is_saved = true;
+end
+
+
+#####
+##### Evaluation
+#####
+
+"""
+Calculate the L2 error between the found and true models
+
+function calc_coefficient_error(m::sra_stateful_object,
+                                t::sra_truth_object)
+
+return err
+"""
+function calc_coefficient_error(m::sra_stateful_object,
+                                t::sra_truth_object)
+    A1 = m.sindy_model.A
+    A2 = t.core_dyn_true.A
+    err = sum((A1 .- A2).^2)
+    return err
 end
 
 
@@ -218,4 +254,4 @@ end
 ##### Export
 export fit_first_model, fit_model, calculate_subsampled_ind,
     save_model_variables, simulate_model, save_for_plotting,
-    calc_residual
+    calc_residual, calc_coefficient_error

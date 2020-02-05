@@ -217,7 +217,7 @@ savefig(plot_final, fname)
 
 
 #####
-##### Van der Pol oscillator
+##### FitzHugh Nagumo oscillator
 #####
 this_dat_name = DAT_FOLDERNAME*"dat_library_of_examples_fhn_";
 this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";
@@ -226,4 +226,17 @@ plot_final = plot_library(this_dat_name, this_fig_name, "FitzHugh Nagumo",
                 plot_coordinate=1)
 
 fname = this_fig_name * "fitzHughNagumo.png";
+savefig(plot_final, fname)
+
+
+#####
+##### Lotka-Volterra predator prey system
+#####
+this_dat_name = DAT_FOLDERNAME*"dat_library_of_examples_lv_";
+this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_";
+plot_final = plot_library(this_dat_name, this_fig_name, "Lotka-Volterra",
+                plot_ind=2001:3000,
+                plot_coordinate=1)
+
+fname = this_fig_name * "lotkaVolterra.png";
 savefig(plot_final, fname)

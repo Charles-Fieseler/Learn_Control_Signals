@@ -10,9 +10,9 @@ include("../../utils/sindy_statistics_utils.jl")
 
 ################################################################################
 #####
-##### Van der Pol example: get data
+##### Lotka-Volterra example: get data
 #####
-include(EXAMPLE_FOLDERNAME*"example_vanDerPol.jl")
+include(EXAMPLE_FOLDERNAME*"example_lotkaVolterra.jl")
 
 # Define the multivariate forcing function
 num_ctr = 3;
@@ -26,7 +26,7 @@ my_U_func_time2(t) = U_func_time(t, u0,
                         amplitude=amplitude)
 
 # Get data
-sol = solve_vdp_system(U_func_time=my_U_func_time2)
+sol = solve_lv_system(U_func_time=my_U_func_time2)
 dat = Array(sol)
 numerical_grad = numerical_derivative(dat, ts)
 true_grad = core_dyn_true(dat)
@@ -38,7 +38,7 @@ end
 
 ## Also get baseline true/ideal cases
 # Uncontrolled
-dat_raw = Array(solve_vdp_system())
+dat_raw = Array(solve_lv_system())
 numerical_grad_raw = numerical_derivative(dat_raw, ts)
 true_grad_raw = zeros(size(dat))
 
@@ -57,7 +57,7 @@ prams.sindyc_ensemble_parameters[:selection_criterion] =
 # p.sindyc_ensemble_parameters[:variable_names] = ["x", "y"];
 prams.variable_names = ["x", "y"];
 prams.sindy_terms_list = Iterators.product(1:3, 1:3)
-prams.sindy_library["cross_terms"] = [2, 3] # Also include cubic terms
+prams.sindy_library["cross_terms"] = [2] # Also include cubic terms
 
 fit_first_model(this_model, 30);
 print_true_equations(this_truth)
@@ -79,8 +79,8 @@ print_current_equations(this_model)
 # plot_subsampled_points_and_control(this_model, this_truth)
 
 #####
-##### Save Van der Pol data
+##### Save Lotka-Volterra data
 #####
-this_dat_name = "dat_library_of_examples_vdp_"
+this_dat_name = "dat_library_of_examples_lv_"
 
 save_for_plotting(this_model, this_truth, this_dat_name)

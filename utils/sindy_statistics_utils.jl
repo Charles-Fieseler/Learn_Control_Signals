@@ -59,8 +59,15 @@ Computes the k-folds cross validation of a SINDYc model
 """
 function sindy_cross_validate(m::sindyc_model, dat, predictor; dist=Normal())
     n = size(dat, 2);
+    zzz
+    make_model(train_ind) =
+        sindyc(dat[:,train_ind], predictor[:,train_ind], m.U;
+                                library=m.library,
+                                use_lasso=true,
+                                quantile_threshold=x,
+                                var_names=m.variable_names)
     scores = cross_validate(
-        train_inds -> m(dat[:, train_inds], 0),        # training function
+        make_model,        # training function
         # TODO: the rss shouldn't need the data itself
         (c, test_inds) -> my_rss(m, dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
         n,              # total number of samples
@@ -105,7 +112,7 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     all_criteria = zeros(n)
     # Convenience function
     make_model(x) = if sparsification_mode == "quantile"
-        sindyc(X, X_grad, U; library=library,
+        sindyc(X, X_grad, U, ts; library=library,
                                 use_lasso=true,
                                 quantile_threshold=x,
                                 var_names=var_names)

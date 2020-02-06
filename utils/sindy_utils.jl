@@ -4,6 +4,7 @@ using LinearAlgebra: cond
 # include("../src/dmdc.jl");
 # include("../utils/combinatorics_utils.jl");
 # include("../utils/regression_utils.jl")
+include("../utils/sparse_regression_functions.jl")
 
 #####
 ##### Fitting function; effectively the default constructor

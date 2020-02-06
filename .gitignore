@@ -5,6 +5,7 @@
 # Paper scratchwork
 /paper/old_*
 /paper/scratch
+/scratch/*
 # Paper files
 *.tex
 *.pdf

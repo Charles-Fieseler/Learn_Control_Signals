@@ -11,13 +11,13 @@ numerical_grad = numerical_derivative(dat, ts)
 
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 
-make_model(x) = sindyc(slst_number(2, x), dat, numerical_grad)
+make_model(x) = sindyc(slstNumber(2, x), dat, numerical_grad)
 
 #####
 ##### Test Sparse Regression function
 #####
 thresh = 0.1
-m1 = slst_hard(2, thresh)
+m1 = slstHard(2, thresh)
 A = sparse_regression(m1, dat, numerical_grad)
 @testset "Hard threshold" begin
     @test all(abs.(A).<thresh)

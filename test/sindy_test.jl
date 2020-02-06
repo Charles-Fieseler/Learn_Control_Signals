@@ -10,15 +10,15 @@ dat = Array(solve_lorenz_system())
 numerical_grad = numerical_derivative(dat, ts)
 
 # Test new interface
-alg = slst_quantile(1, 0.1)
+alg = slstQuantile(1, 0.1)
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
                         optimizer=alg)
-
+alg isa SparseSolver
 tmp = sparse_regression(alg, dat, numerical_grad)
 
-# f(m::sparse_solver) = println("worked")
+# f(m::SparseSolver) = println("worked")
 # f(alg)
 # SINDY tests: up to squared terms
 # sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);

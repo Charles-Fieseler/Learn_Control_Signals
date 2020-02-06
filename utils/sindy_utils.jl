@@ -129,13 +129,13 @@ passed using 'custom_func'. Currently implemented library terms are:
 
 model = sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 library=Dict(),
-                optimizer=dense_solver(),
+                optimizer=denseSolver(),
                 derivative_function=numerical_derivative,
                 var_names=nothing)
 """
 function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
                 library=Dict(),
-                optimizer=dense_solver(),
+                optimizer=denseSolver(),
                 derivative_function=numerical_derivative,
                 var_names=nothing)
                 #TODO: allow custom library functions
@@ -165,6 +165,8 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     end
     # Use my own sequential least squares threshold objects
     if U == nothing
+        println(typeof(optimizer))
+        println(optimizer isa SparseSolver)
         A = sparse_regression(optimizer, X_augmented, X_grad)
         model = sindyc_model(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
                             library, var_names)

@@ -2,40 +2,40 @@
 ###
 ### Structs that define the solver settings
 ###
-abstract type sparse_solver end
+abstract type SparseSolver end
 
 # Sequential Least Squares methods
-struct slst_hard <: sparse_solver
+struct slstHard <: SparseSolver
     num_iter::Number
     hard_threshold::Number
 end
-slst_hard(hard_threshold) = slst_hard(1, hard_threshold)
+slstHard(hard_threshold) = slstHard(1, hard_threshold)
 
-struct slst_quantile <: sparse_solver
+struct slstQuantile <: SparseSolver
     num_iter::Number
     quantile_threshold::Number
 end
-slst_hard(quantile_threshold) = slst_hard(1, quantile_threshold)
+slstHard(quantile_threshold) = slstHard(1, quantile_threshold)
 
-struct slst_number <: sparse_solver
+struct slstNumber <: SparseSolver
     num_iter::Number
     num_terms::Vector
 end
-slst_number(num_terms) = slst_number(1, num_terms)
+slstNumber(num_terms) = slstNumber(1, num_terms)
 
-struct dense_solver <: sparse_solver end
+struct denseSolver <: SparseSolver end
 
 ###
 ### Actually solving
 ###
 """
-Uses sparse_solver objects and implements Sequential Least Squares Thresholding
+Uses SparseSolver objects and implements Sequential Least Squares Thresholding
     in various ways
 
 This is the outer user-facing function that performs checks, namely whether
     recursion over rows is needed
 """
-function sparse_regression(alg::sparse_solver, X::Matrix, y::Matrix)
+function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
                            # num_iter=2,
                            # quantile_threshold=0.1,
                            # hard_threshold=nothing,
@@ -78,7 +78,7 @@ end
 """
 Fake "sparse" solver; just L2 solution
 """
-function _sparse_regression(alg::dense_solver, X::Matrix, y::Matrix,
+function _sparse_regression(alg::denseSolver, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     return X/y
 end
@@ -88,7 +88,7 @@ Implements a hard threshold
 
 see also: threshold_signal!
 """
-function _sparse_regression(alg::slst_hard, X::Matrix, y::Matrix,
+function _sparse_regression(alg::slstHard, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y
@@ -111,7 +111,7 @@ Implements a quantile threshold
 
 see also: sparsify_signal!
 """
-function _sparse_regression(alg::slst_quantile, X::Matrix, y::Matrix,
+function _sparse_regression(alg::slstQuantile, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y
@@ -133,7 +133,7 @@ Implements a hard cap on the number of terms allowed
 
 see also: keep_n_terms
 """
-function _sparse_regression(alg::slst_number, X::Matrix, y::Matrix,
+function _sparse_regression(alg::slstNumber, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y
@@ -151,5 +151,5 @@ function _sparse_regression(alg::slst_number, X::Matrix, y::Matrix,
 end
 
 
-export slst_hard, slst_quantile, slst_number, dense_solver, sparse_solver,
+export slstHard, slstQuantile, slstNumber, denseSolver, SparseSolver,
     sparse_regression

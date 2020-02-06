@@ -59,7 +59,7 @@ Computes the k-folds cross validation of a SINDYc model
 """
 function sindy_cross_validate(m::sindyc_model,
                             dat, predictor,
-                            optimizer::sparse_solver;
+                            optimizer::SparseSolver;
                             dist=Normal())
     n = size(dat, 2);
     # zzz

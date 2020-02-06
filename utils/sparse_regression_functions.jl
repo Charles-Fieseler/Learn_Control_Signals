@@ -8,19 +8,26 @@ abstract type SparseSolver end
 struct slstHard <: SparseSolver
     num_iter::Number
     hard_threshold::Number
+    iterate_through_rows::Bool
 end
+slstHard(num_iter, hard_threshold) = slstHard(num_iter, hard_threshold, false)
 slstHard(hard_threshold) = slstHard(1, hard_threshold)
 
 struct slstQuantile <: SparseSolver
     num_iter::Number
     quantile_threshold::Number
+    iterate_through_rows::Bool
 end
-slstHard(quantile_threshold) = slstHard(1, quantile_threshold)
+slstQuantile(num_iter, quantile_threshold) =
+    slstQuantile(num_iter, quantile_threshold, false)
+slstQuantile(quantile_threshold) = slstQuantile(1, quantile_threshold)
 
 struct slstNumber <: SparseSolver
     num_iter::Number
     num_terms::Vector
+    iterate_through_rows::Bool
 end
+slstNumber(num_iter, num_terms) = slstNumber(num_iter, num_terms, true)
 slstNumber(num_terms) = slstNumber(1, num_terms)
 
 struct denseSolver <: SparseSolver end
@@ -41,7 +48,7 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
                            # hard_threshold=nothing,
                            # num_terms=nothing)
     # Initial check: should we do recursive?
-    if size(y,1) > 1
+    if size(y,1) > 1 && alg.iterate_through_rows == true
         A = zeros(size(y,1), size(X,1))
         # For the 2d predictor case, just loop over rows
         for i in 1:size(y,1)
@@ -65,10 +72,9 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
                             # num_terms=n)
             println(A)
         end
-        return A
+    else
+        A =  private_sparse_regression(alg, X, y, nothing)
     end
-
-    A =  private_sparse_regression(alg, X, y, nothing)
     return A
 end
 

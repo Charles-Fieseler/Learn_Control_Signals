@@ -48,11 +48,11 @@ end;
 # Nonzero term and type tests
 t1 = get_nonzero_terms(test_model)
 t2 = get_nonzero_terms(core_dyn_true)
-
-@testset "Type Tests" begin
-    @test typeof(test_model) <: sindyc_model
-    @test issubset(t2, t1)
-end
+# typeof(test_model) <: sindyc_model
+# @testset "Type Tests" begin
+@test typeof(test_model) <: sindyc_model
+@test issubset(t2, t1)
+# end
 
 # Also test cross validation function
 test_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,

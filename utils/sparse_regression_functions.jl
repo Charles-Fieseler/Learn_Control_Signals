@@ -9,16 +9,19 @@ struct slst_hard <: sparse_solver
     num_iter::Number
     hard_threshold::Number
 end
+slst_hard(hard_threshold) = slst_hard(1, hard_threshold)
 
 struct slst_quantile <: sparse_solver
     num_iter::Number
     quantile_threshold::Number
 end
+slst_hard(quantile_threshold) = slst_hard(1, quantile_threshold)
 
 struct slst_number <: sparse_solver
     num_iter::Number
     num_terms::Vector
 end
+slst_number(num_terms) = slst_number(1, num_terms)
 
 struct dense_solver <: sparse_solver end
 
@@ -148,5 +151,5 @@ function _sparse_regression(alg::slst_number, X::Matrix, y::Matrix,
 end
 
 
-export slst_hard, slst_quantile, slst_number, dense_solver,
+export slst_hard, slst_quantile, slst_number, dense_solver, sparse_solver,
     sparse_regression

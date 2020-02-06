@@ -4,7 +4,7 @@ using LinearAlgebra: cond
 # include("../src/dmdc.jl");
 # include("../utils/combinatorics_utils.jl");
 # include("../utils/regression_utils.jl")
-include("../utils/sparse_regression_functions.jl")
+# include("../utils/sparse_regression_functions.jl")
 
 #####
 ##### Fitting function; effectively the default constructor
@@ -165,8 +165,6 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     end
     # Use my own sequential least squares threshold objects
     if U == nothing
-        println(typeof(optimizer))
-        println(optimizer isa SparseSolver)
         A = sparse_regression(optimizer, X_augmented, X_grad)
         model = sindyc_model(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
                             library, var_names)

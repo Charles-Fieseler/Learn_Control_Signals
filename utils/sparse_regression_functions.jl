@@ -57,7 +57,7 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
             # end
             # Call inner function
             this_y = y[i:i,:]
-            A[i, :] = _sparse_regression(alg, X, this_y, i)#,
+            A[i, :] = private_sparse_regression(alg, X, this_y, i)#,
                             # num_iter=num_iter,
                             # quantile_threshold=quantile_threshold,
                             # hard_threshold=hard_threshold,
@@ -66,7 +66,7 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
         return A
     end
 
-    A =  _sparse_regression(alg, X, y, nothing)
+    A =  private_sparse_regression(alg, X, y, nothing)
     return A
 end
 
@@ -78,7 +78,7 @@ end
 """
 Fake "sparse" solver; just L2 solution
 """
-function _sparse_regression(alg::denseSolver, X::Matrix, y::Matrix,
+function private_sparse_regression(alg::denseSolver, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     return X/y
 end
@@ -88,7 +88,7 @@ Implements a hard threshold
 
 see also: threshold_signal!
 """
-function _sparse_regression(alg::slstHard, X::Matrix, y::Matrix,
+function private_sparse_regression(alg::slstHard, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y
@@ -111,7 +111,7 @@ Implements a quantile threshold
 
 see also: sparsify_signal!
 """
-function _sparse_regression(alg::slstQuantile, X::Matrix, y::Matrix,
+function private_sparse_regression(alg::slstQuantile, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y
@@ -133,7 +133,7 @@ Implements a hard cap on the number of terms allowed
 
 see also: keep_n_terms
 """
-function _sparse_regression(alg::slstNumber, X::Matrix, y::Matrix,
+function private_sparse_regression(alg::slstNumber, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
         A = X/y

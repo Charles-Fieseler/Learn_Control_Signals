@@ -21,12 +21,12 @@ module PkgSRA
 
     # Utilities
     include("../utils/array_utils.jl")
-    include("../utils/sindy_utils.jl")
     include("../utils/regression_utils.jl")
     include("../utils/control_utils.jl")
     include("../utils/posterior_sampling_utils.jl")
     include("../utils/combinatorics_utils.jl");
     include("../utils/sparse_regression_functions.jl")
+    include("../utils/sindy_utils.jl") # BUG with optimizers
 
     # State of the iterative algorithm, and plotting utilities
     include("../utils/main_algorithm_utils.jl")

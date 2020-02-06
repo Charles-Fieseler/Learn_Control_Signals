@@ -2,7 +2,7 @@ using PkgSRA, Test, Random
 Random.seed!(13)
 
 include("../utils/sindy_turing_utils.jl")
-include("../utils/sparse_regression_functions.jl")
+# include("../utils/sparse_regression_functions.jl")
 
 # Generate test data: Lorenz
 include("../examples/example_lorenz.jl")
@@ -15,8 +15,8 @@ sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
                         optimizer=alg)
-alg isa SparseSolver
-tmp = sparse_regression(alg, dat, numerical_grad)
+# alg isa SparseSolver
+# tmp = sparse_regression(alg, dat, numerical_grad)
 
 # f(m::SparseSolver) = println("worked")
 # f(alg)

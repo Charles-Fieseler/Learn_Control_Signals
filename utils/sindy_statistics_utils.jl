@@ -57,14 +57,22 @@ my_rss(m::sindyc_model, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
 Computes the k-folds cross validation of a SINDYc model
     From: https://mlbasejl.readthedocs.io/en/latest/crossval.html
 """
-function sindy_cross_validate(m::sindyc_model, dat, predictor; dist=Normal())
+function sindy_cross_validate(m::sindyc_model,
+                            dat, predictor,
+                            optimizer::sparse_solver;
+                            dist=Normal())
     n = size(dat, 2);
-    zzz
+    # zzz
+    # make_model(train_ind) =
+    #     sindyc(dat[:,train_ind], predictor[:,train_ind], m.U;
+    #                             library=m.library,
+    #                             use_lasso=true,
+    #                             quantile_threshold=x,
+    #                             var_names=m.variable_names)
     make_model(train_ind) =
         sindyc(dat[:,train_ind], predictor[:,train_ind], m.U;
                                 library=m.library,
-                                use_lasso=true,
-                                quantile_threshold=x,
+                                optimizer=optimizer,
                                 var_names=m.variable_names)
     scores = cross_validate(
         make_model,        # training function

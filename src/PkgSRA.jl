@@ -26,6 +26,7 @@ module PkgSRA
     include("../utils/control_utils.jl")
     include("../utils/posterior_sampling_utils.jl")
     include("../utils/combinatorics_utils.jl");
+    include("../utils/sparse_regression_functions.jl")
 
     # State of the iterative algorithm, and plotting utilities
     include("../utils/main_algorithm_utils.jl")

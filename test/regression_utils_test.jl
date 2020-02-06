@@ -2,6 +2,7 @@ using PkgSRA, Test, Random
 Random.seed!(13)
 
 include("../utils/regression_utils.jl")
+include("../utils/sparse_regression_functions.jl")
 
 # Generate test data: Lorenz
 include("../examples/example_lorenz.jl")
@@ -10,34 +11,42 @@ numerical_grad = numerical_derivative(dat, ts)
 
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 
-make_model(x) = sindyc(dat, numerical_grad,
-                    library=sindy_library, use_lasso=true,
-                    quantile_threshold=nothing,
-                    num_terms=x)
+make_model(x) = sindyc(slst_number(2, x), dat, numerical_grad)
+
+#####
+##### Test Sparse Regression function
+#####
+thresh = 0.1
+m1 = slst_hard(2, thresh)
+A = sparse_regression(m1, dat, numerical_grad)
+@testset "Hard threshold" begin
+    @test all(abs.(A).<thresh)
+end
 
 #####
 ##### Test sparse models: all equations same terms
 #####
-num_terms = 5
-terms = get_nonzero_terms(make_model(num_terms))
-@test length(terms) == size(dat,1)*num_terms
-
-#
-num_terms = 3
-terms = get_nonzero_terms(make_model(num_terms))
-@test length(terms) == size(dat,1)*num_terms
+num_terms5 = [5]
+terms5 = get_nonzero_terms(make_model(num_terms5))
+num_terms3 = [3]
+terms3 = get_nonzero_terms(make_model(num_terms3))
+@testset "Number of terms" begin
+    @test length(terms5) == size(dat,1)*num_terms5
+    @test length(terms3) == size(dat,1)*num_terms5
+end
 
 #####
 ##### Test sparse models: all equations different terms
 #####
-num_terms = [1, 2, 3]
-terms = get_nonzero_terms(make_model(num_terms))
-@test length(terms) == sum(num_terms)
+@testset "Number of terms2" begin
+    num_terms = [1, 2, 3]
+    terms = get_nonzero_terms(make_model(num_terms))
+    @test length(terms) == sum(num_terms)
 
-num_terms = [2, 3, 4]
-terms = get_nonzero_terms(make_model(num_terms))
-@test length(terms) == sum(num_terms)
-
+    num_terms = [2, 3, 4]
+    terms = get_nonzero_terms(make_model(num_terms))
+    @test length(terms) == sum(num_terms)
+end
 
 #####
 ##### Test ensemble models
@@ -53,10 +62,12 @@ val_list = [1, 2]
 (best_model_raw,best_criterion,all_criteria,all_models) =
     make_ensemble(val_list)
 
-i = 1
-@test length(get_nonzero_terms(all_models[i])) == size(dat,1)*val_list[i]
-i = 2
-@test length(get_nonzero_terms(all_models[i])) == size(dat,1)*val_list[i]
+@testset "Ensemble models" begin
+    i = 1
+    @test length(get_nonzero_terms(all_models[i])) == size(dat,1)*val_list[i]
+    i = 2
+    @test length(get_nonzero_terms(all_models[i])) == size(dat,1)*val_list[i]
+end
 
 # Permutations
 # val_list = calc_permutations(5,3)
@@ -65,11 +76,15 @@ val_list = Iterators.product(1:3,1:3,1:3) # DEBUG
 (best_model,best_criterion,all_criteria,all_models) =
     make_ensemble(val_list)
 
-for (i, v) in enumerate(val_list)
-    @test length(get_nonzero_terms(all_models[i])) == sum(v)
+@testset "Permutations" begin
+    for (i, v) in enumerate(val_list)
+        @test length(get_nonzero_terms(all_models[i])) == sum(v)
+    end
 end
 
 # The best model should be almost the real one
-for (real_val, model_val) in zip(vec(core_dyn_true.A), vec(best_model.A))
-    @test isapprox(Float64(real_val), model_val, atol=1e-1)
+@testset "Accuracy" begin
+    for (real_val, model_val) in zip(vec(core_dyn_true.A), vec(best_model.A))
+        @test isapprox(Float64(real_val), model_val, atol=1e-1)
+    end
 end

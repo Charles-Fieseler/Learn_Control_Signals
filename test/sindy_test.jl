@@ -2,17 +2,25 @@ using PkgSRA, Test, Random
 Random.seed!(13)
 
 include("../utils/sindy_turing_utils.jl")
+# include("../utils/sparse_regression_functions.jl")
 
 # Generate test data: Lorenz
 include("../examples/example_lorenz.jl")
 dat = Array(solve_lorenz_system())
 numerical_grad = numerical_derivative(dat, ts)
 
-# SINDY tests: up to squared terms
+# Test new interface
+alg = slst_quantile(2, 0.1)
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
-                        use_lasso=true)
+                        optimizer=alg)
+
+# SINDY tests: up to squared terms
+# sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
+# test_model = sindyc(dat, numerical_grad, nothing, ts,
+#                         library=sindy_library,
+#                         use_lasso=true)
 
 # Built correct terms: names
 named_terms = build_term_names(test_model)
@@ -43,9 +51,12 @@ t2 = get_nonzero_terms(core_dyn_true)
 end
 
 # Also test cross validation function
-null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
+test_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
                         library=sindy_library,
-                        use_lasso=true)
+                        optimizer=alg)
+# null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
+#                         library=sindy_library,
+#                         use_lasso=true)
 err_test = sindy_cross_validate(test_model, dat, numerical_grad)
 err_null = sindy_cross_validate(null_model, dat, numerical_grad)
 
@@ -64,9 +75,13 @@ numerical_grad = numerical_derivative(dat, ts)
 
 sindy_library = Dict("cross_terms"=>[2,3],
                     "constant"=>nothing);
-test_model2 = sindyc(dat, numerical_grad, nothing, ts,
+# test_model2 = sindyc(dat, numerical_grad, nothing, ts,
+#                         library=sindy_library,
+#                         use_lasso=true,
+#                         var_names=["x", "y"])
+test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
-                        use_lasso=true,
+                        optimizer=alg,
                         var_names=["x", "y"])
 
 named_terms = build_term_names(test_model2)

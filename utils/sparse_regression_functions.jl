@@ -10,7 +10,7 @@ struct slstHard <: SparseSolver
     hard_threshold::Number
     iterate_through_rows::Bool
 end
-slstHard(num_iter, hard_threshold) = slstHard(num_iter, hard_threshold, false)
+slstHard(num_iter, hard_threshold) = slstHard(num_iter, hard_threshold, true)
 slstHard(hard_threshold) = slstHard(1, hard_threshold)
 
 struct slstQuantile <: SparseSolver
@@ -19,7 +19,7 @@ struct slstQuantile <: SparseSolver
     iterate_through_rows::Bool
 end
 slstQuantile(num_iter, quantile_threshold) =
-    slstQuantile(num_iter, quantile_threshold, false)
+    slstQuantile(num_iter, quantile_threshold, true)
 slstQuantile(quantile_threshold) = slstQuantile(1, quantile_threshold)
 
 struct slstNumber <: SparseSolver
@@ -48,7 +48,7 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
                            # hard_threshold=nothing,
                            # num_terms=nothing)
     # Initial check: should we do recursive?
-    if size(y,1) > 1 && alg.iterate_through_rows == true
+    if size(y,1) > 1 && alg.iterate_through_rows
         A = zeros(size(y,1), size(X,1))
         # For the 2d predictor case, just loop over rows
         for i in 1:size(y,1)
@@ -64,16 +64,16 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
             # end
             # Call inner function
             this_y = y[i:i,:]
-            println(size(this_y))
+            # println(size(this_y))
             A[i, :] = private_sparse_regression(alg, X, this_y, i)#,
                             # num_iter=num_iter,
                             # quantile_threshold=quantile_threshold,
                             # hard_threshold=hard_threshold,
                             # num_terms=n)
-            println(A)
+            # @show A
         end
     else
-        A =  private_sparse_regression(alg, X, y, nothing)
+        A =  private_sparse_regression(alg, X, y, 0, nothing)
     end
     return A
 end
@@ -87,8 +87,8 @@ end
 Fake "sparse" solver; just L2 solution
 """
 function private_sparse_regression(alg::denseSolver, X::Matrix, y::Matrix,
-                            which_data_row::Number, A=nothing)
-    return X/y
+                            A=nothing)
+    return y/X
 end
 
 """
@@ -99,7 +99,7 @@ see also: threshold_signal!
 function private_sparse_regression(alg::slstHard, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
-        A = X/y
+        A = y/X
     end
     # Redo, removing the rows in X that were zeroed out
     for i in 1:alg.num_iter
@@ -122,15 +122,15 @@ see also: sparsify_signal!
 function private_sparse_regression(alg::slstQuantile, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
-        A = X/y
+        A = y/X
     end
-    println(A)
+    # println(A)
     # Redo, removing the rows in X that were zeroed out
     for i in 1:alg.num_iter
         sparsify_signal!(A, quantile_threshold=alg.quantile_threshold)
-        which_rows = vec(abs.(A) .> 0)
-        A_subset = y/(X[which_rows, :])
-        A[which_rows] = A_subset
+        which_rows = vec(abs.(A) .> 0) # Find zeros from sparsification
+        A_subset = y/(X[which_rows, :]) # Redo best fit
+        A[which_rows] = A_subset # Update non-zero weights
         A[.!which_rows] .= 0.0 # Retain the previous zeros
     end
 
@@ -145,7 +145,7 @@ see also: keep_n_terms
 function private_sparse_regression(alg::slstNumber, X::Matrix, y::Matrix,
                             which_data_row::Number, A=nothing)
     if A == nothing
-        A = X/y
+        A = y/X
     end
     # Redo, removing the rows in X that were zeroed out
     for i in 1:alg.num_iter

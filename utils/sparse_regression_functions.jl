@@ -57,11 +57,13 @@ function sparse_regression(alg::SparseSolver, X::Matrix, y::Matrix)
             # end
             # Call inner function
             this_y = y[i:i,:]
+            println(size(this_y))
             A[i, :] = private_sparse_regression(alg, X, this_y, i)#,
                             # num_iter=num_iter,
                             # quantile_threshold=quantile_threshold,
                             # hard_threshold=hard_threshold,
                             # num_terms=n)
+            println(A)
         end
         return A
     end
@@ -116,6 +118,7 @@ function private_sparse_regression(alg::slstQuantile, X::Matrix, y::Matrix,
     if A == nothing
         A = X/y
     end
+    println(A)
     # Redo, removing the rows in X that were zeroed out
     for i in 1:alg.num_iter
         sparsify_signal!(A, quantile_threshold=alg.quantile_threshold)

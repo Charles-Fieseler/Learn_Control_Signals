@@ -58,6 +58,7 @@ noise_vals = 0:0.05:0.3
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
 num_models = 20
 all_err = zeros(length(noise_vals), num_models)
+all_naive_err = zeros(length(noise_vals), num_models)
 all_i = zeros(length(noise_vals), num_models)
 
 # Make model template
@@ -86,6 +87,7 @@ for (i,σ) in enumerate(noise_vals)
         fit_first_model(this_model, 30);
         print_true_equations(this_truth)
         print_current_equations(this_model)
+        all_naive_err[i, j] = calc_coefficient_error(this_model, this_truth)
 
         #################################################################
         ### Iterate

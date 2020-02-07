@@ -40,7 +40,7 @@ Akaike Information Criterion (AIC), without being 'clever' and using an error
     distribution as in the above function
 """
 simple_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
-    2log(my_rss(m, dat, predictor)) + 2my_dof(m)
+    2log(rss_sindy_derivs(m, dat, predictor)) + 2my_dof(m)
 
 
 ################################################################################
@@ -49,10 +49,18 @@ simple_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
 #####
 
 """
-Computes the residual sum of squares error for a SINDYc model
+Computes the residual sum of squares error (derivatives) for a SINDy model
 """
-my_rss(m::DynamicalSystemModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
-# my_rss(m::sindyModel, dat, predictor) = sum(m(dat) .- predictor).^2;
+rss_sindy_derivs(m::DynamicalSystemModel, dat, predictor) =
+    sum(m(dat, 0) .- predictor).^2;
+
+
+"""
+Computes the residual sum of squares error (simulated) for a SINDy model
+"""
+rss_sindy_integrate(m::DynamicalSystemModel, dat, predictor) =
+    sum(m(dat, 0) .- predictor).^2;
+
 
 """
 Computes the k-folds cross validation of a SINDYc model
@@ -72,7 +80,7 @@ function sindyc_cross_validate(m::sindycModel,
     scores = cross_validate(
         (ind)->sindyc_retrain(m, dat[:,ind], predictor[:,ind], m.U[:,ind]),
         # TODO: the rss shouldn't need the data itself
-        (new_model, test_inds) -> my_rss(new_model,
+        (new_model, test_inds) -> rss_sindy_derivs(new_model,
                         dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
         n,              # total number of samples
         Kfold(n, 3))    # cross validation plan: 3-fold
@@ -94,7 +102,7 @@ function sindy_cross_validate(m::sindyModel,
     scores = cross_validate(
         my_retrain,
         # TODO: the rss shouldn't need the data itself
-        (new_model, test_inds) -> my_rss(new_model,
+        (new_model, test_inds) -> rss_sindy_derivs(new_model,
                         dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
         n,              # total number of samples
         Kfold(n, 3))    # cross validation plan: 3-fold
@@ -207,7 +215,7 @@ end
 ################################################################################
 """
 sindy_ensemble(model_template, X, X_grad, val_list;
-                selection_criterion=my_rss)
+                selection_criterion=rss_sindy_derivs)
 
 Loop over several values of optimizer hyperparameters via
     MINIMIZING the 'selection_criterion' function
@@ -218,7 +226,7 @@ Loop over several values of optimizer hyperparameters via
 """
 function sindy_ensemble(model_template::sindyModel,
                 X, X_grad, val_list;
-                selection_criterion=my_rss,
+                selection_criterion=rss_sindy_derivs,
                 test_ind=1:500)
     # TODO: check these test indices
     n = length(val_list)
@@ -250,6 +258,6 @@ end
 
 #
 export sindyc_ensemble, sindy_ensemble, get_sindyc_ensemble_parameters,
-        my_aic, my_aicc, my_dof, my_rss,
+        my_aic, my_aicc, my_dof, rss_sindy_derivs,
         sindy_cross_validate, sindyc_cross_validate,
         calc_coefficient_error

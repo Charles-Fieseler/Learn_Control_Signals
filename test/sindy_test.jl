@@ -98,9 +98,9 @@ cerr1 = calc_coefficient_error(m1, core_dyn_true)
 cerr2 = calc_coefficient_error(m2, core_dyn_true)
 # Residual
 ind = 1:500
-rss0 = my_rss(core_dyn_true, dat[:,ind], numerical_grad[:,ind])
-rss1 = my_rss(m1, dat[:,ind], numerical_grad[:,ind])
-rss2 = my_rss(m2, dat[:,ind], numerical_grad[:,ind])
+rss0 = rss_sindy_derivs(core_dyn_true, dat[:,ind], numerical_grad[:,ind])
+rss1 = rss_sindy_derivs(m1, dat[:,ind], numerical_grad[:,ind])
+rss2 = rss_sindy_derivs(m2, dat[:,ind], numerical_grad[:,ind])
 
 #
 @testset "Error calculations" begin

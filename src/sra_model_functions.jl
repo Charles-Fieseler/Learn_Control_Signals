@@ -176,7 +176,7 @@ function calculate_subsampled_ind(m::sra_stateful_object,
         if not_enough_pts_mode == "error"
             error("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
         else
-            @warn("DataError: Not enough accepted points with noise factor $tmp_noise_factor; increase noise_factor or decrease num_pts")
+            @warn("DataError: Not enough accepted points with noise level $(tmp_noise_factor*noise_guess)")
         end
         m.subsample_ind = accepted_ind[p.start_ind:end]
     else

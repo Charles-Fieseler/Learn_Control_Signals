@@ -143,9 +143,10 @@ function calc_best_random_subsample(model_template, dat2,
 
     # Just do SINDY here, not Turing yet
     sz = size(initial_subsamples)
-    all_final_models2 = Vector{sindycModel}(undef,sz)
+    all_final_models2 = Vector{DynamicalSystemModel}(undef,sz)
     all_errL2 = zeros(sz)
     for (i, inds) in enumerate(initial_subsamples)
+        println("Testing random subsample $i/$(length(initial_subsamples))")
         if use_control
             f = sindyc_ensemble
         else
@@ -154,13 +155,13 @@ function calc_best_random_subsample(model_template, dat2,
         (all_final_models2[i], all_errL2[i], _, _, _) =
              f(model_template, dat2[:,inds], numerical_grad2[:, inds],
                 val_list; sindyc_ensemble_params...)
-        if sindyc_ensemble_params[:selection_criterion] == my_aicc
-            # Calculate real L2 error
-            this_dat = all_final_models2[i](dat2, 0)
-            all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
-        else
-            # Should be cross validation; already L2 error
-        end
+        # if sindyc_ensemble_params[:selection_criterion] == my_aicc
+        #     # Calculate real L2 error
+        #     this_dat = all_final_models2[i](dat2, 0)
+        #     all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+        # else
+        #     # Should be cross validation; already L2 error
+        # end
     end
 
     # Choose the best of the above models and subsamples

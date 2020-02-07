@@ -81,7 +81,7 @@ numerical_grad = numerical_derivative(dat, ts)
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 lib = convert_string2function(sindy_library)
 #      x   y   c   xx xy yy
-A1 = [[0.8 0   0   0 -1.4 0 ];
+A1 = [[0.7 0   0   0 -1.3 0 ];
       [0  0   0   0   0   1e-6 ]]
 n = size(A, 1)
 m1 = sindyModel(ts, A1, lib ,["x", "y"])

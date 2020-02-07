@@ -109,6 +109,7 @@ function fit_model(m::sra_stateful_object)
         if !m.is_saved
             save_model_variables(m)
         end
+        println("Iteration $(m.i+1) improved the fit (err=$best_criterion)")
         # These overwrite the previous step, which has been saved
         m.sindy_model = sindy_model
         m.sindy_dat = nothing # Reset
@@ -118,7 +119,7 @@ function fit_model(m::sra_stateful_object)
         m.i += 1
         is_improved = true
     else
-        println("Iteration $(m.i+1) did not improve the fit")
+        println("Iteration $(m.i+1) did not improve the fit (err=$best_criterion)")
         println("Found equation:")
         print_equations(sindy_model)
         is_improved = false

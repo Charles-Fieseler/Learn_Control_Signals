@@ -111,6 +111,11 @@ end
 
 # boxplot(collect(noise_vals)', all_err')
 
+# Remove outliers
+all_err_saved = copy(all_err);
+for i in 1:size(all_err,1)
+    all_err[i,:] = replace_outliers(all_err[i,:], 0)
+end
 vec_err, std_err = mean_and_std(all_err, 2)
 # vec_err, std_err = mean_and_std(all_err)
 plot(noise_vals, vec_err, ribbon=std_err)

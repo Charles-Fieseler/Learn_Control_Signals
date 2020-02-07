@@ -99,9 +99,30 @@ end
 #     return A
 # end
 
+"""
+Removes outliers, by default 3 times the median
+"""
+function remove_outliers(dat::Vector, metric=median, max_val=3)
+    m = 3*median(abs.(dat))
+    return dat[abs.(dat) .< m]
+end
 
+"""
+Replaces outliers (by default 3 times the median) with replace_val.
+    This defaults to 'missing'
+"""
+function replace_outliers(dat::Vector, replace_val=missing, metric=median, max_val=3)
+    new_dat = copy(dat)
+    m = 3*median(abs.(dat))
+    for i in 1:length(dat)
+        if dat[i] > m
+            new_dat[i] = replace_val
+        end
+    end
+    return new_dat
+end
 
 # export sparse_regression, sparsify_signal, threshold_signal!,
 #         keep_n_terms
 export sparsify_signal, threshold_signal!,
-        keep_n_terms
+        keep_n_terms, remove_outliers, replace_outliers

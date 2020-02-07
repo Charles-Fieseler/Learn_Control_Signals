@@ -12,10 +12,11 @@ module PkgSRA
     ## Sindy-specific
     using Lasso
 
-    # Core numerical algorithms with control
+    # Core objects and types
     include("../utils/sparse_regression_functions.jl")
-    include("numerical_derivatives.jl")
     include("sindy.jl")
+    # Core numerical algorithms
+    include("numerical_derivatives.jl")
     include("dmdc.jl")
     include("initialize_control_signal.jl")
     include("forcing_functions.jl")

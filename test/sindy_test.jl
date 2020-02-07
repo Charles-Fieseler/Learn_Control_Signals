@@ -3,7 +3,7 @@ Random.seed!(13)
 
 include("../utils/sindy_turing_utils.jl")
 # include("../utils/sparse_regression_functions.jl")
-include("../utils/sindy_statistics_utils.jl")
+# include("../utils/sindy_statistics_utils.jl")
 
 # Generate test data: Lorenz
 include("../examples/example_lorenz.jl")

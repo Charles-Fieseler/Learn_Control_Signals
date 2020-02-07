@@ -44,7 +44,7 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
                                         m.dat,
                                         m.numerical_grad,
                                         num_pts=1000,
-                                        num_subsamples=20,
+                                        num_subsamples=10,
                                         val_list=p.sindy_terms_list;
                                         sindyc_ensemble_params=ensemble_p,
                                         use_control=use_control)
@@ -119,6 +119,8 @@ function fit_model(m::sra_stateful_object)
         is_improved = true
     else
         println("Iteration $(m.i+1) did not improve the fit")
+        println("Found equation:")
+        print_equations(sindy_model)
         is_improved = false
     end
     return all_models, is_improved
@@ -166,15 +168,15 @@ function calculate_subsampled_ind(m::sra_stateful_object,
         accepted_ind = subsample_using_residual(residual,
                     tmp_noise_factor*noise_guess, min_length=4);
         i += 1;
-        i > 20 && break
-        tmp_noise_factor *= 1.5;
+        i > 10 && break
+        tmp_noise_factor *= 2.0;
     end
 
     if length(accepted_ind) < p.num_pts+p.start_ind-1
         if not_enough_pts_mode == "error"
             error("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
         else
-            @warn("DataError: Not enough accepted points; increase noise_factor or decrease num_pts")
+            @warn("DataError: Not enough accepted points with noise factor $tmp_noise_factor; increase noise_factor or decrease num_pts")
         end
         m.subsample_ind = accepted_ind[p.start_ind:end]
     else
@@ -226,7 +228,7 @@ end
 ##### Other steps
 #####
 """
-Side-Step: Integrate the current model
+Helper function: Integrate the current model
 
 Note: not necessary for simulation, just for plotting
 
@@ -234,12 +236,13 @@ See methods:
 plot_sindy_model
 """
 function simulate_model(m::sra_stateful_object)
-    p = m.parameters
+    # p = m.parameters
     # Callback aborts if it blows up
-    condition(u,t,integrator) = any(abs.(u).>1e4)
-    cb = DiscreteCallback(condition, terminate!)
-    prob = ODEProblem(m.sindy_model, m.u0, m.tspan, [0], callback=cb)
-    m.sindy_dat = Array(solve(prob, Tsit5(), saveat=m.ts));
+    # condition(u,t,integrator) = any(abs.(u).>1e4)
+    # cb = DiscreteCallback(condition, terminate!)
+    # prob = ODEProblem(m.sindy_model, m.u0, m.tspan, [0], callback=cb)
+    # m.sindy_dat = Array(solve(prob, Tsit5(), saveat=m.ts));
+    m.sindy_dat = simulate_model(m.sindy_model, m.u0)
 end
 
 

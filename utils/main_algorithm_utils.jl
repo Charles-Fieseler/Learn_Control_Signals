@@ -129,7 +129,7 @@ return (best_initial_subsample=best_initial_subsample,
 function calc_best_random_subsample(model_template, dat2,
                         numerical_grad2;
                         num_pts=400,
-                        num_subsamples=10,
+                        num_subsamples=20,
                         val_list = Iterators.product(1:3,1:3),
                         sindyc_ensemble_params=get_sindyc_ensemble_parameters(),
                         use_control=true)

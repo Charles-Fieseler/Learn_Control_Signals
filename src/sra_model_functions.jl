@@ -169,7 +169,7 @@ function calculate_subsampled_ind(m::sra_stateful_object,
                     tmp_noise_factor*noise_guess, min_length=4);
         i += 1;
         i > 10 && break
-        tmp_noise_factor *= 2.0;
+        tmp_noise_factor *= 3.0;
     end
 
     if length(accepted_ind) < p.num_pts+p.start_ind-1

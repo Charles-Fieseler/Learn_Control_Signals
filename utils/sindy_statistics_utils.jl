@@ -59,7 +59,7 @@ rss_sindy_derivs(m::DynamicalSystemModel, dat, predictor) =
 Computes the residual sum of squares error (simulated) for a SINDy model
 """
 rss_sindy_integrate(m::DynamicalSystemModel, dat, predictor) =
-    sum(m(dat, 0) .- predictor).^2;
+    sum(simulate_model(m, dat[:,1]) .- predictor).^2;
 
 
 """

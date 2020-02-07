@@ -2,6 +2,7 @@
 #   See also: sra_model_object.jl for the saved states
 #   See also: sra_model_function.jl for the analysis steps
 
+import PkgSRA.plot_sindy_model
 
 #####
 ##### Basic data plotting

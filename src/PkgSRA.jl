@@ -28,6 +28,7 @@ module PkgSRA
     include("../utils/posterior_sampling_utils.jl")
     include("../utils/combinatorics_utils.jl");
     include("../utils/sindy_utils.jl")
+    include("../utils/sindy_plotting.jl")
     include("../utils/sindy_statistics_utils.jl")
 
     # State of the iterative algorithm, and plotting utilities

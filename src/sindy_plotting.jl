@@ -1,6 +1,5 @@
 
 # include("sindy.jl")
-import PkgSRA.plot_sindy_model
 
 # Extending other function
 function plot_sindy_model(m::DynamicalSystemModel, u0;

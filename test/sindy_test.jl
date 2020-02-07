@@ -1,7 +1,7 @@
 using PkgSRA, Test, Random
 Random.seed!(13)
 
-include("../utils/sindy_turing_utils.jl")
+# include("../utils/sindy_turing_utils.jl")
 # include("../utils/sparse_regression_functions.jl")
 # include("../utils/sindy_statistics_utils.jl")
 
@@ -109,8 +109,9 @@ rss2 = my_rss(m2, dat, numerical_grad)
     @test rss2 > rss1
 end
 
-u0 = dat[1,:]
-plot_sindy_model(m1, u0)
+u0 = dat[:,1]
+plot_sindy_model(m1, u0, which_dim=2)
+plot!(m1.ts, dat[2,:])
 
 
 

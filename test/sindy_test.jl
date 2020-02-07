@@ -92,6 +92,12 @@ A2 = [[0.7 0   0   0 -1.3 1e-6 ];
       [0  -0.7 0  1e-6 0.7  0]]
 m2 = sindyModel(ts, A2, lib ,["x", "y"])
 
+# Third, another decent model on both variables
+#      x   y   c   xx xy yy
+A3 = [[0.7 0   0   0 -1.3 0 ];
+      [1e-6 -0.9 0 0 0.8  0]]
+m3 = sindyModel(ts, A3, lib ,["x", "y"])
+
 ## Calculate errors
 # Coefficients
 cerr1 = calc_coefficient_error(m1, core_dyn_true)
@@ -101,6 +107,7 @@ ind = 1:500
 rss0 = rss_sindy_derivs(core_dyn_true, dat[:,ind], numerical_grad[:,ind])
 rss1 = rss_sindy_derivs(m1, dat[:,ind], numerical_grad[:,ind])
 rss2 = rss_sindy_derivs(m2, dat[:,ind], numerical_grad[:,ind])
+rss3 = rss_sindy_derivs(m3, dat[:,ind], numerical_grad[:,ind])
 
 #
 @testset "Error calculations" begin

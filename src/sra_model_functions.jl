@@ -47,7 +47,8 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
                                         num_subsamples=10,
                                         val_list=p.sindy_terms_list;
                                         sindyc_ensemble_params=ensemble_p,
-                                        use_control=use_control)
+                                        use_control=use_control,
+                                        max_error=initial_noise)
         sindy_model = out[:best_model]
         all_criteria = out[:all_errL2]
         best_criterion = minimum(all_criteria)
@@ -122,7 +123,7 @@ function fit_model(m::sra_stateful_object)
         println("Iteration $(m.i+1) did not improve the fit")
         println("(old=$(m.best_sindy_criteria);new=$best_criterion)")
         println("Found equation:")
-        print_equations(sindy_model)
+        print_equations(sindy_model, digits=4)
         is_improved = false
     end
     return all_models, is_improved

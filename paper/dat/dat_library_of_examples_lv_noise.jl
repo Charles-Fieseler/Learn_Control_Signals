@@ -50,13 +50,13 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 ##### Loop over additive noise
 #####
 
-noise_vals = [0, 0.1]
-# noise_vals = 0:0.05:0.3
+# noise_vals = [0, 0.1]
+noise_vals = 0.0:0.03:0.2
 # noise_factor = norm(numerical_grad)
 # noise_factor = 1;
 # noise_vals .*= noise_factor
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
-num_models = 5
+num_models = 20
 all_err = zeros(length(noise_vals), num_models)
 all_naive_err = zeros(length(noise_vals), num_models)
 all_i = zeros(length(noise_vals), num_models)
@@ -102,7 +102,7 @@ for (i,σ) in enumerate(noise_vals)
 
         all_err[i, j] = calc_coefficient_error(this_model, this_truth)
         all_i[i, j] = this_model.i
-        println("Final error = $(all_err[i, j])")
+        println("Final error in coefficients = $(all_err[i, j])")
         println("")
     end
     println("Finished noise level $σ")
@@ -128,9 +128,14 @@ vec_i, std_i = mean_and_std(all_i, 2)
 plot(noise_vals, vec_i, ribbon=std_err)
     xlabel!("Noise")
     ylabel!("Number of iterations")
+    title!("Average number of iterations to convergence")
 
-vec_i, std_i = mean_and_std(all_i, 2)
-plot(noise_vals, )
+vec_naive = mean(all_naive_err, dims=2)
+vec_diff, std_diff = mean_and_std(vec_naive .- all_err, 2)
+plot(noise_vals, vec_diff, ribbon=std_diff)
+    xlabel!("Noise")
+    ylabel!("Average improvement")
+# plot(noise_vals, )
 # plot_subsampled_points(this_model)
 # plot_subsampled_simulation(this_model, 2)
 # plot_subsampled_derivatives(this_model, 2)

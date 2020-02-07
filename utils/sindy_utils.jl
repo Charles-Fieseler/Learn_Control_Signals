@@ -237,7 +237,7 @@ function sindy(X, X_grad=nothing, ts=nothing;
     end
     # Use my own sequential least squares threshold objects
     A = sparse_regression(optimizer, X_augmented, X_grad)
-    model = sindyModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+    model = sindyModel(ts, A,
                         library, var_names, optimizer)
 
     return model
@@ -297,7 +297,7 @@ Prints equations of a SINDy model using saved or passed variable names
     Note: if 0.0 is displayed, this means the coefficient was nonzero to the
     tolerance specified in 'tol' but below the rounding threshold
 """
-function print_equations(model::sindycModel;
+function print_equations(model::DynamicalSystemModel;
                          var_names=nothing, tol=1e-4, digits=1)
     n, m = size(model.A)
     if var_names == nothing
@@ -328,7 +328,7 @@ function print_equations(model::sindycModel;
     # println()
 end
 
-function get_nonzero_terms(model::sindycModel; linear_indices=false)
+function get_nonzero_terms(model::DynamicalSystemModel; linear_indices=false)
     # A = reshape(model.A, length(model.A))
     if linear_indices
         lin = LinearIndices(model.A)
@@ -338,7 +338,7 @@ function get_nonzero_terms(model::sindycModel; linear_indices=false)
     end
 end
 
-function get_nonzero_term_names(model::sindycModel)
+function get_nonzero_term_names(model::DynamicalSystemModel)
     rhs_names = build_term_names(model)
     term_ind = get_nonzero_terms(model)
     lhs_names = model.variable_names
@@ -458,9 +458,9 @@ FUNCTION_DICT = Dict("cross_terms"=>calc_cross_terms,
 
      return term_names
  end
- build_term_names(model::sindycModel, var_names) =
+ build_term_names(model::DynamicalSystemModel, var_names) =
      build_term_names(model.library, var_names)
- build_term_names(model::sindycModel) =
+ build_term_names(model::DynamicalSystemModel) =
      build_term_names(model.library, model.variable_names)
 
 
@@ -532,6 +532,6 @@ end
 
 export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
-    build_dataframe, sindyc, print_equations,
+    build_dataframe, sindyc, sindy, print_equations,
     get_nonzero_terms, get_nonzero_term_names, build_term_names,
     sindyc_retrain

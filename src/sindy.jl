@@ -79,7 +79,7 @@ control_signal(m::sindycModel) = m.B*m.U
 function simulate_model(m::DynamicalSystemModel, u0)
     condition(u,t,integrator) = any(abs.(u).>1e4)
     cb = DiscreteCallback(condition, terminate!)
-    prob = ODEProblem(m, u0, m.ts, [0], callback=cb)
+    prob = ODEProblem(m, u0, (m.ts[1], m.ts[end]), [0], callback=cb)
     return Array(solve(prob, Tsit5(), saveat=m.ts));
 end
 

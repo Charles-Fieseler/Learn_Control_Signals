@@ -45,13 +45,25 @@ t2 = get_nonzero_terms(core_dyn_true)
 @test issubset(t2, t1)
 # end
 
+###
+### Cross validation functions
+###
+
+# First, retraining functions
+test_model2 = sindy_retrain(test_model, dat, numerical_grad)
+t1 = get_nonzero_terms(test_model)
+t2 = get_nonzero_terms(test_model2)
+
+@testset "Retrained model" begin
+    @test typeof(test_model2) <: sindyModel
+    @test t1==t2
+    @test calc_coefficient_error(test_model, test_model2) ≈ 0.0
+end
+
 # Also test cross validation function
-null_model = sindy(dat, 0.1.*randn(size(dat)), ts,
+null_model = sindy(dat, numerical_grad, ts,
                         library=sindy_library,
-                        optimizer=alg)
-# null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
-#                         library=sindy_library,
-#                         use_lasso=true)
+                        optimizer=slstHard(100)) # i.e. not sparse
 err_test = sindy_cross_validate(test_model, dat, numerical_grad)
 err_null = sindy_cross_validate(null_model, dat, numerical_grad)
 
@@ -70,16 +82,12 @@ numerical_grad = numerical_derivative(dat, ts)
 
 sindy_library = Dict("cross_terms"=>[2,3],
                     "constant"=>nothing);
-# test_model2 = sindyc(dat, numerical_grad, nothing, ts,
-#                         library=sindy_library,
-#                         use_lasso=true,
-#                         var_names=["x", "y"])
-test_model = sindyc(dat, numerical_grad, nothing, ts,
+test_model = sindy(dat, numerical_grad, ts,
                         library=sindy_library,
                         optimizer=alg,
                         var_names=["x", "y"])
 
-named_terms = build_term_names(test_model2)
+named_terms = build_term_names(test_model)
 @testset "Cubic term names" begin
     @test named_terms ==
         ["x", "y", "", "xx", "xy", "yy", "xxx", "xxy", "xyy", "yyy"]

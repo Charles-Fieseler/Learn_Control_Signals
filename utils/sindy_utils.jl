@@ -531,4 +531,4 @@ export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
     build_dataframe, sindyc, sindy, print_equations,
     get_nonzero_terms, get_nonzero_term_names, build_term_names,
-    sindyc_retrain
+    sindyc_retrain, sindy_retrain

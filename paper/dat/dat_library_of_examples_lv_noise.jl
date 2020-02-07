@@ -16,11 +16,11 @@ include("../scripts/paper_settings.jl");
 include(EXAMPLE_FOLDERNAME*"example_lotkaVolterra.jl")
 
 # Define the multivariate forcing function
-num_ctr = 3;
-    U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0.3;
+num_ctr = 7;
+    U_starts = rand(1, num_ctr) .* tspan[2]
+    U_widths = 0.4;
     # U_widths = 0;
-    amplitude = 1.0
+    amplitude = 2.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,
                         F_dim=1,
@@ -37,6 +37,10 @@ for (i, t) in enumerate(ts)
     U_true[:,i] = my_U_func_time2(t)
 end
 
+plot(sol)
+    plot!(ts, U_true[1,:])
+    title!("Data")
+
 ## Also get baseline true/ideal cases
 # Uncontrolled
 dat_raw = Array(solve_lv_system())
@@ -51,12 +55,12 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 #####
 
 # noise_vals = [0, 0.1]
-noise_vals = 0.0:0.03:0.2
+noise_vals = 0.0:0.05:0.2
 # noise_factor = norm(numerical_grad)
 # noise_factor = 1;
 # noise_vals .*= noise_factor
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
-num_models = 20
+num_models = 10
 all_err = zeros(length(noise_vals), num_models)
 all_naive_err = zeros(length(noise_vals), num_models)
 all_i = zeros(length(noise_vals), num_models)
@@ -114,21 +118,21 @@ all_err_saved = copy(all_err);
 
 # Remove outliers
 all_err = all_err_saved;
-for i in 1:size(all_err,1)
-    all_err[i,:] = replace_outliers(all_err[i,:], 0)
-end
+# for i in 1:size(all_err,1)
+#     all_err[i,:] = replace_outliers(all_err[i,:], 0)
+# end
 vec_err, std_err = mean_and_std(all_err, 2)
 # vec_err, std_err = mean_and_std(all_err)
 plot(noise_vals, vec_err, ribbon=std_err)
     xlabel!("Noise")
     ylabel!("Coefficient Error")
 
-vec_i, std_i = mean_and_std(all_i, 2)
-# vec_err, std_err = mean_and_std(all_err)
-plot(noise_vals, vec_i, ribbon=std_err)
-    xlabel!("Noise")
-    ylabel!("Number of iterations")
-    title!("Average number of iterations to convergence")
+# vec_i, std_i = mean_and_std(all_i, 2)
+# # vec_err, std_err = mean_and_std(all_err)
+# plot(noise_vals, vec_i, ribbon=std_err)
+#     xlabel!("Noise")
+#     ylabel!("Number of iterations")
+#     title!("Average number of iterations to convergence")
 
 vec_naive = mean(all_naive_err, dims=2)
 vec_diff, std_diff = mean_and_std(vec_naive .- all_err, 2)

@@ -150,7 +150,7 @@ function calc_best_random_subsample(model_template, dat2,
     all_final_models2 = Vector{DynamicalSystemModel}(undef,sz)
     all_errL2 = zeros(sz)
     current_error = max_error+1
-    max_iter = 10
+    max_iter = 3
     this_iter = 1
     if use_control; f = sindyc_ensemble; else; f = sindy_ensemble end
     while current_error > max_error

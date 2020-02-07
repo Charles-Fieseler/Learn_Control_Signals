@@ -171,7 +171,7 @@ function calculate_subsampled_ind(m::sra_stateful_object,
         accepted_ind = subsample_using_residual(residual,
                     tmp_noise_factor*noise_guess, min_length=4);
         i += 1;
-        i > 10 && break
+        i > 20 && break
         tmp_noise_factor *= 3.0;
     end
 

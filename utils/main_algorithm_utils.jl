@@ -139,6 +139,8 @@ function calc_best_random_subsample(model_template, dat2,
         push!(initial_subsamples, randperm(size(dat2,2))[1:num_pts])
     end
 
+    println("Calculating best random subsample; control=$use_control)")
+
     # Just do SINDY here, not Turing yet
     sz = size(initial_subsamples)
     all_final_models2 = Vector{sindycModel}(undef,sz)

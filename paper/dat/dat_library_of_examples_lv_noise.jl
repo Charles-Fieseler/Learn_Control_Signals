@@ -58,20 +58,26 @@ noise_vals = [0, 0]
 num_models = 5
 all_err = zeros(length(noise_vals), num_models)
 
+# Make model template
+variable_names = ["x", "y"]
+optimizer = slstNumber((1, 1));
+library = Dict("cross_terms"=>[2])
+model_template = sindyModel(convert_string2function(library),
+    variable_names, optimizer)
 
 for (i,σ) in enumerate(noise_vals)
     for j in 1:num_models
         noisy_grad = numerical_grad .+ σ.*randn(size(dat))
         # Initialize
         this_model = sra_stateful_object(ts, tspan, dat, u0, noisy_grad)
-        prams = this_model.parameters
         # Reset parameters because we are NOT using control
+        this_model.parameters = get_sra_defaults(false)
+        prams = this_model.parameters
+        prams.model_template = model_template
         # prams.sindyc_ensemble_parameters =
         #     Dict(:selection_criterion=>sindy_cross_validate);
         # prams.sindyc_ensemble_parameters[:selection_criterion] =
         #     sindy_cross_validate;
-        prams.model_template.variable_names = ["x", "y"];
-        prams.model_template.sindy_library[calc_cross_terms] = [2] # Also include cubic terms
         prams.sindy_terms_list = Iterators.product(1:3, 1:3)
         prams.initial_subsampling = true
 

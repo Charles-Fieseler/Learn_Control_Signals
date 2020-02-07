@@ -1,7 +1,7 @@
 # Plotting the data structure for the state of an SRA analysis
 #   See also: sra_model_object.jl for the saved states
 #   See also: sra_model_plotting.jl for plotting methods
-include("../utils/main_algorithm_utils.jl")
+# include("../utils/main_algorithm_utils.jl")
 include("../paper/scripts/paper_settings.jl");
 using BSON: @save
 
@@ -35,13 +35,12 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
     use_control = is_using_control(m)
     if use_control
         ensemble_p[:selection_dist] = Normal(0.0, initial_noise)
-        model_template = sindycModel(zzz)
     end
 
     # Note: both of the branches call sindyc_ensemble
     if p.initial_subsampling
-        println("Initial subsampling")
-        (out) = calc_best_random_subsample(model_template,
+        println("Initial subsampling; control=$use_control")
+        (out) = calc_best_random_subsample(p.model_template,
                                         m.dat,
                                         m.numerical_grad,
                                         num_pts=1000,
@@ -283,7 +282,7 @@ end
 ###
 
 is_using_control(m::sra_stateful_object) =
-    isa(m.sindy_model, sindycModel)
+    isa(m.parameters.model_template, sindycModel)
 
 
 ##### Export

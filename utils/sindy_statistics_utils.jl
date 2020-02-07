@@ -225,6 +225,8 @@ function sindy_ensemble(model_template::sindyModel,
 
     opt = model_template.optimizer
     for (i, val) in enumerate(val_list)
+        println("Testing optimizer $(typeof(model_template.optimizer)) with value:")
+        @show val
         # Update optimzer and retrain
         model_template.optimizer = copy_optimizer(opt, val)
         this_m = sindy_retrain(model_template, X, X_grad)

@@ -11,7 +11,7 @@ Random.seed!(11)
 ##### Define the controlled dynamical system
 #####
 # Load helper functions
-include("../../utils/sindy_statistics_utils.jl")
+# include("../../utils/sindy_statistics_utils.jl")
 include("../../utils/sindy_turing_utils.jl")
 include("../scripts/paper_settings.jl")
 # Load example problem

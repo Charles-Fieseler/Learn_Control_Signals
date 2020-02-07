@@ -24,7 +24,7 @@ slstQuantile(quantile_threshold) = slstQuantile(1, quantile_threshold)
 
 struct slstNumber <: SparseSolver
     num_iter::Number
-    num_terms::Vector
+    num_terms::Tuple
     iterate_through_rows::Bool
 end
 slstNumber(num_iter, num_terms) = slstNumber(num_iter, num_terms, true)

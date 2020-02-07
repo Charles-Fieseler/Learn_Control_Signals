@@ -2,7 +2,7 @@
 # Core data structure for the state of an SRA analysis
 #   See also: sra_model_plotting.jl for plotting methods
 #   See also: sra_model_function.jl for the analysis steps
-include("../utils/sindy_statistics_utils.jl")
+# include("../utils/sindy_statistics_utils.jl")
 
 #####
 ##### Helper structure, for the analysis parameters
@@ -41,11 +41,11 @@ function get_sra_defaults(use_control=true)
     optimizer = slstQuantile(0.1);
     if use_control
         sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
-        model_template = sindyModel(
+        model_template = sindycModel(
             convert_string2function(sindy_library), variable_names, optimizer);
     else
         sindyc_ensemble_parameters = Dict();
-        model_template = sindycModel(
+        model_template = sindyModel(
             convert_string2function(sindy_library), variable_names, optimizer);
     end
     sindy_terms_list = Iterators.product(1:3,1:3,1:3)
@@ -57,8 +57,8 @@ function get_sra_defaults(use_control=true)
         initial_subsampling,
         use_turing,
         noise_factor,
-        variable_names,
         model_template,
+        sindy_terms_list,
         sindyc_ensemble_parameters,
         num_pts,
         start_ind)

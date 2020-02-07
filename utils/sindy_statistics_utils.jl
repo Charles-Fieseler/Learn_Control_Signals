@@ -52,14 +52,14 @@ simple_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
 Computes the residual sum of squares error (derivatives) for a SINDy model
 """
 rss_sindy_derivs(m::DynamicalSystemModel, dat, predictor) =
-    sum(m(dat, 0) .- predictor).^2;
+    sum((m(dat, 0) .- predictor).^2);
 
 
 """
 Computes the residual sum of squares error (simulated) for a SINDy model
 """
 rss_sindy_integrate(m::DynamicalSystemModel, dat, predictor) =
-    sum(simulate_model(m, dat[:,1]) .- predictor).^2;
+    sum((simulate_model(m, dat[:,1]) .- predictor).^2);
 
 
 """

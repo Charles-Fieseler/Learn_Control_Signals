@@ -120,7 +120,10 @@ Optional step 0: Randomly subsample the initial data (for the naive model)
 calc_best_random_subsample(model_template, dat2, numerical_grad2, sindy_library;
                                     num_pts=400,
                                     num_subsamples=10,
-                                    val_list = Iterators.product(1:3,1:3))
+                                    val_list = Iterators.product(1:3,1:3),
+                                    sindyc_ensemble_params=get_sindyc_ensemble_parameters(),
+                                    use_control=true,
+                                    max_error=nothing)
 return (best_initial_subsample=best_initial_subsample,
         best_model=all_final_models2[tmp_ind],
         all_initial_subsamples=initial_subsamples,
@@ -132,7 +135,8 @@ function calc_best_random_subsample(model_template, dat2,
                         num_subsamples=20,
                         val_list = Iterators.product(1:3,1:3),
                         sindyc_ensemble_params=get_sindyc_ensemble_parameters(),
-                        use_control=true)
+                        use_control=true,
+                        max_error=0)
     # Initially, randomly subsample the data
     initial_subsamples = []
     for i in 1:num_subsamples
@@ -145,23 +149,32 @@ function calc_best_random_subsample(model_template, dat2,
     sz = size(initial_subsamples)
     all_final_models2 = Vector{DynamicalSystemModel}(undef,sz)
     all_errL2 = zeros(sz)
-    for (i, inds) in enumerate(initial_subsamples)
-        println("Testing random subsample $i/$(length(initial_subsamples))")
-        if use_control
-            f = sindyc_ensemble
-        else
-            f = sindy_ensemble
+    current_error = max_error+1
+    max_iter = 10
+    this_iter = 1
+    if use_control; f = sindyc_ensemble; else; f = sindy_ensemble end
+    while current_error > max_error
+        if this_iter > 1
+            println("Random subsampling gave a large error ($current_error), retrying")
         end
-        (all_final_models2[i], all_errL2[i], _, _, _) =
-             f(model_template, dat2[:,inds], numerical_grad2[:, inds],
-                val_list; sindyc_ensemble_params...)
-        # if sindyc_ensemble_params[:selection_criterion] == my_aicc
-        #     # Calculate real L2 error
-        #     this_dat = all_final_models2[i](dat2, 0)
-        #     all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
-        # else
-        #     # Should be cross validation; already L2 error
-        # end
+        for (i, inds) in enumerate(initial_subsamples)
+            println("Testing random subsample $i/$(length(initial_subsamples))")
+            (all_final_models2[i], all_errL2[i], _, _, _) =
+                 f(model_template, dat2[:,inds], numerical_grad2[:, inds],
+                    val_list; sindyc_ensemble_params...)
+            # if sindyc_ensemble_params[:selection_criterion] == my_aicc
+            #     # Calculate real L2 error
+            #     this_dat = all_final_models2[i](dat2, 0)
+            #     all_errL2[i] = sum(abs, numerical_grad2.-this_dat)
+            # else
+            #     # Should be cross validation; already L2 error
+            # end
+        end
+        current_error = minimum(all_errL2)
+        this_iter += 1
+        if max_error == 0 || this_iter >= max_iter
+            break
+        end
     end
 
     # Choose the best of the above models and subsamples

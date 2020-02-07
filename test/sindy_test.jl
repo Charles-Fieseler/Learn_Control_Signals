@@ -3,6 +3,7 @@ Random.seed!(13)
 
 include("../utils/sindy_turing_utils.jl")
 # include("../utils/sparse_regression_functions.jl")
+include("../utils/sindy_statistics_utils.jl")
 
 # Generate test data: Lorenz
 include("../examples/example_lorenz.jl")
@@ -10,7 +11,7 @@ dat = Array(solve_lorenz_system())
 numerical_grad = numerical_derivative(dat, ts)
 
 # Test new interface
-alg = slstQuantile(4, 0.3)
+alg = slstQuantile(4, 0.2) # Will get extra terms
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
 test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
@@ -38,14 +39,14 @@ end;
 # Nonzero term and type tests
 t1 = get_nonzero_terms(test_model)
 t2 = get_nonzero_terms(core_dyn_true)
-# typeof(test_model) <: sindyc_model
+# typeof(test_model) <: sindycModel
 # @testset "Type Tests" begin
-@test typeof(test_model) <: sindyc_model
+@test typeof(test_model) <: sindycModel
 @test issubset(t2, t1)
 # end
 
 # Also test cross validation function
-test_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
+null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
                         library=sindy_library,
                         optimizer=alg)
 # null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,

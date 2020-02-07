@@ -6,14 +6,14 @@
 #####
 ##### Basic data plotting
 #####
-function plot_data(m::sra_stateful_object)
-    names = m.sra_parameters
-    plot(m.ts,m.dat[1,:], label=names[1]);
-    for i = 2:size(m.dat,1)
-        plot!(m.ts,m.dat[i,:], label=names[i]);
-    end
-    title!("Raw data")
-end
+# function plot_data(m::sra_stateful_object)
+#     names = m.sra_parameters
+#     plot(m.ts,m.dat[1,:], label=names[1]);
+#     for i = 2:size(m.dat,1)
+#         plot!(m.ts,m.dat[i,:], label=names[i]);
+#     end
+#     title!("Raw data")
+# end
 
 function plot_data(m::sra_stateful_object, which_dim=1)
     names = m.parameters.variable_names

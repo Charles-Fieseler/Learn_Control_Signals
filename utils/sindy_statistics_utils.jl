@@ -51,8 +51,8 @@ simple_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
 """
 Computes the residual sum of squares error for a SINDYc model
 """
-my_rss(m::sindycModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
-my_rss(m::sindyModel, dat, predictor) = sum(m(dat) .- predictor).^2;
+my_rss(m::DynamicalSystemModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
+# my_rss(m::sindyModel, dat, predictor) = sum(m(dat) .- predictor).^2;
 
 """
 Computes the k-folds cross validation of a SINDYc model
@@ -218,7 +218,9 @@ Loop over several values of optimizer hyperparameters via
 """
 function sindy_ensemble(model_template::sindyModel,
                 X, X_grad, val_list;
-                selection_criterion=my_rss)
+                selection_criterion=my_rss,
+                test_ind=1:500)
+    # TODO: check these test indices
     n = length(val_list)
     all_models = Vector(undef, n)
     all_criteria = zeros(n)
@@ -230,7 +232,8 @@ function sindy_ensemble(model_template::sindyModel,
         # Update optimzer and retrain
         model_template.optimizer = copy_optimizer(opt, val)
         this_m = sindy_retrain(model_template, X, X_grad)
-        all_criteria[i] = selection_criterion(this_m, X, X_grad)
+        all_criteria[i] = selection_criterion(
+            this_m, X[:,test_ind], X_grad[:,test_ind])
         all_models[i] = this_m
     end
 

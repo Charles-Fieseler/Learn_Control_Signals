@@ -97,21 +97,28 @@ m2 = sindyModel(ts, A2, lib ,["x", "y"])
 cerr1 = calc_coefficient_error(m1, core_dyn_true)
 cerr2 = calc_coefficient_error(m2, core_dyn_true)
 # Residual
-rss0 = my_rss(core_dyn_true, dat, numerical_grad)
-rss1 = my_rss(m1, dat, numerical_grad)
-rss2 = my_rss(m2, dat, numerical_grad)
+ind = 1:500
+rss0 = my_rss(core_dyn_true, dat[:,ind], numerical_grad[:,ind])
+rss1 = my_rss(m1, dat[:,ind], numerical_grad[:,ind])
+rss2 = my_rss(m2, dat[:,ind], numerical_grad[:,ind])
 
 #
 @testset "Error calculations" begin
     @test cerr1 > cerr2
     @test rss1 > rss0
     @test rss2 > rss0
-    @test rss2 > rss1
+    @test rss1 > rss2
 end
 
+using Plots
+pyplot()
 u0 = dat[:,1]
 plot_sindy_model(m1, u0, which_dim=2)
-plot!(m1.ts, dat[2,:])
+    plot!(m1.ts, dat[2,:])
+    title!("Model 1")
+plot_sindy_model(m2, u0, which_dim=2)
+    plot!(m2.ts, dat[2,:])
+    title!("Model 2")
 
 
 

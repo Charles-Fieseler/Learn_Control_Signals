@@ -32,24 +32,29 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
     p = m.parameters
     # Change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
-    ensemble_p[:selection_dist] = Normal(0.0, initial_noise)
+    use_control = is_using_control(m)
+    if use_control
+        ensemble_p[:selection_dist] = Normal(0.0, initial_noise)
+        model_template = sindycModel(zzz)
+    end
 
     # Note: both of the branches call sindyc_ensemble
     if p.initial_subsampling
         println("Initial subsampling")
-        (out) = calc_best_random_subsample(m.dat,
+        (out) = calc_best_random_subsample(model_template,
+                                        m.dat,
                                         m.numerical_grad,
-                                        p.sindy_library,
                                         num_pts=1000,
                                         num_subsamples=20,
                                         val_list = p.sindy_terms_list;
-                                        sindyc_ensemble_params=ensemble_p)
+                                        sindyc_ensemble_params=ensemble_p,
+                                        use_control=use_control)
         sindy_model = out[:best_model]
         all_criteria = out[:all_errL2]
         best_criterion = minimum(all_criteria)
     else
         (sindy_model,best_criterion,all_criteria,all_models) =
-            sindyc_ensemble(
+            sindyc_ensemble(model_template,
                     m.dat,
                     m.numerical_grad,
                     p.sindy_library,
@@ -273,7 +278,15 @@ function save_for_plotting(m::sra_stateful_object,
     @save fname dat_ctr ctr_guess2 #sindy_grad_ctr
 end
 
+###
+### Utilities
+###
+
+is_using_control(m::sra_stateful_object) =
+    isa(m.sindy_model, sindycModel)
+
+
 ##### Export
 export fit_first_model, fit_model, calculate_subsampled_ind,
     save_model_variables, simulate_model, save_for_plotting,
-    calc_residual, calc_coefficient_error
+    calc_residual, calc_coefficient_error, is_using_control

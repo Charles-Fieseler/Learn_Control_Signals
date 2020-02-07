@@ -204,8 +204,47 @@ function get_sindyc_ensemble_parameters()
 end
 
 
+################################################################################
+"""
+sindy_ensemble(model_template, X, X_grad, val_list;
+                selection_criterion=my_rss)
+
+Loop over several values of optimizer hyperparameters via
+    MINIMIZING the 'selection_criterion' function
+        selection_criterion() should have signature:
+        selection_criterion(model, data, predictor)
+
+    Also returns all the sparsity values and all the models
+"""
+function sindy_ensemble(model_template::sindyModel,
+                X, X_grad, val_list;
+                selection_criterion=my_rss)
+    n = length(val_list)
+    all_models = Vector(undef, n)
+    all_criteria = zeros(n)
+
+    opt = model_template.optimizer
+    for (i, val) in enumerate(val_list)
+        # Update optimzer and retrain
+        model_template.optimizer = copy_optimizer(opt, val)
+        this_m = sindy_retrain(model_template, X, X_grad)
+        all_criteria[i] = selection_criterion(this_m, X, X_grad)
+        all_models[i] = this_m
+    end
+
+    best_criterion, best_index = findmin(all_criteria)
+
+    return (best_model=all_models[best_index],
+            best_criterion=best_criterion,
+            all_criteria=all_criteria,
+            all_models=all_models,
+            best_index=best_index)
+end
+
+
+
 #
-export sindyc_ensemble, get_sindyc_ensemble_parameters,
-        my_aic, my_aicc, my_dof,
+export sindyc_ensemble, sindy_ensemble, get_sindyc_ensemble_parameters,
+        my_aic, my_aicc, my_dof, my_rss,
         sindy_cross_validate, sindyc_cross_validate,
         calc_coefficient_error

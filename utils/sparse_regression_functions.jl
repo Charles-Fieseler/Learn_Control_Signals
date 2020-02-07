@@ -32,6 +32,8 @@ slstNumber(num_terms) = slstNumber(1, num_terms)
 
 struct denseSolver <: SparseSolver end
 
+copy_optimizer(s::SparseSolver, options...) = typeof(s)(options...)
+
 ###
 ### Actually solving
 ###
@@ -161,4 +163,4 @@ end
 
 
 export slstHard, slstQuantile, slstNumber, denseSolver, SparseSolver,
-    sparse_regression
+    sparse_regression, copy_optimizer

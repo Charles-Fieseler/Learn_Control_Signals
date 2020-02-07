@@ -117,7 +117,7 @@ end
 """
 Optional step 0: Randomly subsample the initial data (for the naive model)
 
-calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
+calc_best_random_subsample(model_template, dat2, numerical_grad2, sindy_library;
                                     num_pts=400,
                                     num_subsamples=10,
                                     val_list = Iterators.product(1:3,1:3))
@@ -126,11 +126,13 @@ return (best_initial_subsample=best_initial_subsample,
         all_initial_subsamples=initial_subsamples,
         all_errL2=all_errL2)
 """
-function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
+function calc_best_random_subsample(model_template, dat2,
+                        numerical_grad2;
                         num_pts=400,
                         num_subsamples=10,
                         val_list = Iterators.product(1:3,1:3),
-                        sindyc_ensemble_params=get_sindyc_ensemble_parameters())
+                        sindyc_ensemble_params=get_sindyc_ensemble_parameters(),
+                        use_control=true)
     # Initially, randomly subsample the data
     initial_subsamples = []
     for i in 1:num_subsamples
@@ -142,11 +144,14 @@ function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
     all_final_models2 = Vector{sindycModel}(undef,sz)
     all_errL2 = zeros(sz)
     for (i, inds) in enumerate(initial_subsamples)
+        if use_control
+            f = sindyc_ensemble
+        else
+            f = sindy_ensemble
+        end
         (all_final_models2[i], all_errL2[i], _, _, _) =
-             sindyc_ensemble(dat2[:,inds],
-                             numerical_grad2[:, inds],
-                             sindy_library, val_list;
-                             sindyc_ensemble_params...)
+             f(model_template, dat2[:,inds], numerical_grad2[:, inds],
+                val_list; sindyc_ensemble_params...)
         if sindyc_ensemble_params[:selection_criterion] == my_aicc
             # Calculate real L2 error
             this_dat = all_final_models2[i](dat2, 0)

@@ -237,8 +237,7 @@ function sindy(X, X_grad=nothing, ts=nothing;
     end
     # Use my own sequential least squares threshold objects
     A = sparse_regression(optimizer, X_augmented, X_grad)
-    model = sindyModel(ts, A,
-                        library, var_names, optimizer)
+    model = sindyModel(ts, A, library, var_names, optimizer)
 
     return model
 end

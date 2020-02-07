@@ -9,7 +9,7 @@ abstract type DynamicalSystemModel end
 #####
 ##### SINDY model object and methods
 #####
-struct sindyModel <: DynamicalSystemModel
+mutable struct sindyModel <: DynamicalSystemModel
     ts::Vector
     # After fitting
     A::Matrix
@@ -24,6 +24,10 @@ end
 # Convenience method with a default BAD optimizer
 sindyModel(ts, A, lib, var) =
     sindyModel(ts, A, lib, var, denseSolver())
+# Initializer for creating templates
+z = zeros(1,1)
+sindyModel(lib, var, opt::SparseSolver) =
+    sindyModel([0], z, lib, var, opt)
 
 (m::sindyModel)(X) = m.A*augment_data(m, X)
 (m::sindyModel)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
@@ -37,7 +41,7 @@ augment_data(m::DynamicalSystemModel, X) =
 #####
 ##### SINDYc model object and methods
 #####
-struct sindycModel <: DynamicalSystemModel
+mutable struct sindycModel <: DynamicalSystemModel
     ts::Vector
     # After fitting
     A::Matrix
@@ -56,6 +60,10 @@ end
 # Convenience method with a default BAD optimizer
 sindycModel(ts, A, B, U, Uf, lib, var) =
     sindycModel(ts, A, B, U, Uf, lib, var, denseSolver())
+# Initializer for creating templates
+z = zeros(1,1)
+sindycModel(lib, var, opt::SparseSolver) =
+    sindyModel([0], z, z, z, ()->0, lib, var, opt)
 
 (m::sindycModel)(X) = m.A*augment_data(m, X) .+ m.B*m.U
 (m::sindycModel)(X, t) = m.A*augment_data(m, X) .+ m.B*m.U_func(t)

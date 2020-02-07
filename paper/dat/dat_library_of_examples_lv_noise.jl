@@ -7,7 +7,7 @@ using BSON: @save
 include("../scripts/paper_settings.jl");
 # include("../../utils/sindy_turing_utils.jl")
 # include("../../utils/main_algorithm_utils.jl")
-include("../../utils/sindy_statistics_utils.jl")
+# include("../../utils/sindy_statistics_utils.jl")
 
 ################################################################################
 #####
@@ -65,11 +65,14 @@ for (i,σ) in enumerate(noise_vals)
         # Initialize
         this_model = sra_stateful_object(ts, tspan, dat, u0, noisy_grad)
         prams = this_model.parameters
-        prams.sindyc_ensemble_parameters[:selection_criterion] =
-            sindy_cross_validate;
-        prams.variable_names = ["x", "y"];
+        # Reset parameters because we are NOT using control
+        # prams.sindyc_ensemble_parameters =
+        #     Dict(:selection_criterion=>sindy_cross_validate);
+        # prams.sindyc_ensemble_parameters[:selection_criterion] =
+        #     sindy_cross_validate;
+        prams.model_template.variable_names = ["x", "y"];
+        prams.model_template.sindy_library[calc_cross_terms] = [2] # Also include cubic terms
         prams.sindy_terms_list = Iterators.product(1:3, 1:3)
-        prams.sindy_library["cross_terms"] = [2] # Also include cubic terms
         prams.initial_subsampling = true
 
         fit_first_model(this_model, 30);

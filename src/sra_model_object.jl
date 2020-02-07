@@ -16,8 +16,9 @@ mutable struct sra_parameters
     use_turing::Bool
     noise_factor::Number
     # Parameters shared between all iterations of SINDy model
-    variable_names
-    sindy_library::Dict
+    # variable_names
+    # sindy_library::Dict
+    model_template::DynamicalSystemModel
     sindy_terms_list
     sindyc_ensemble_parameters
     # Subsampling to get the next iteration
@@ -26,7 +27,7 @@ mutable struct sra_parameters
 end
 
 # Initializer with defaults
-function get_sra_defaults()
+function get_sra_defaults(use_control=true)
     debug_mode = true;
     debug_folder = "";
     # Initial, naive model
@@ -37,8 +38,17 @@ function get_sra_defaults()
     # Parameters shared between all iterations of SINDy model
     variable_names = ["x", "y", "z"]
     sindy_library = Dict("cross_terms"=>[2],"constant"=>nothing);
+    optimizer = slstQuantile(0.1);
+    if use_control
+        sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
+        model_template = sindyModel(
+            convert_string2function(sindy_library), variable_names, optimizer);
+    else
+        sindyc_ensemble_parameters = Dict();
+        model_template = sindycModel(
+            convert_string2function(sindy_library), variable_names, optimizer);
+    end
     sindy_terms_list = Iterators.product(1:3,1:3,1:3)
-    sindyc_ensemble_parameters = get_sindyc_ensemble_parameters();
     # Subsampling to get the next iteration
     num_pts = 1000;
     start_ind = 1;
@@ -48,8 +58,7 @@ function get_sra_defaults()
         use_turing,
         noise_factor,
         variable_names,
-        sindy_library,
-        sindy_terms_list,
+        model_template,
         sindyc_ensemble_parameters,
         num_pts,
         start_ind)

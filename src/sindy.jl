@@ -30,6 +30,7 @@ sindyModel(lib, var, opt::SparseSolver) =
     sindyModel([0], z, lib, var, opt)
 
 (m::sindyModel)(X) = m.A*augment_data(m, X)
+(m::sindyModel)(X, t) = m.A*augment_data(m, X) # To match syntax below
 (m::sindyModel)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
 
 # Functions for both uncontrolled and controlled

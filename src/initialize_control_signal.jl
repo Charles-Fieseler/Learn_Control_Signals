@@ -1,6 +1,6 @@
 using Statistics
 
-include("sindyc.jl")
+# include("sindyc.jl")
 include("../utils/regression_utils.jl")
 
 """

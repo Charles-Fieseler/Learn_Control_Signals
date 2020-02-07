@@ -10,7 +10,7 @@ using MLBase # Just for cross validation
 Gets number of degrees of freedom, which is equal to the
 number of nonzero terms + 1 for noise
 """
-my_dof(m::sindycModel) = length(get_nonzero_terms(m)) + 1
+my_dof(m::DynamicalSystemModel) = length(get_nonzero_terms(m)) + 1
 
 
 #####
@@ -19,7 +19,7 @@ my_dof(m::sindycModel) = length(get_nonzero_terms(m)) + 1
 """
 Akaike Information Criterion (AIC) for SINDy models
 """
-my_aic(m::sindycModel, dat, predictor; dist=Normal()) =
+my_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
     -2loglikelihood(dist, (m(dat) .- predictor)') + 2my_dof(m)
 
 
@@ -27,7 +27,7 @@ my_aic(m::sindycModel, dat, predictor; dist=Normal()) =
 Corrected Akaike Information Criterion.
     Used for small sample sizes (Hurvich and Tsai 1989)
 """
-function my_aicc(m::sindycModel, dat, predictor; dist=Normal())
+function my_aicc(m::DynamicalSystemModel, dat, predictor; dist=Normal())
     k = my_dof(m)
     n = length(dat) # equal to numel(dat)
     correction = 2k*(k+1)/(n-k-1)
@@ -39,7 +39,7 @@ end
 Akaike Information Criterion (AIC), without being 'clever' and using an error
     distribution as in the above function
 """
-simple_aic(m::sindycModel, dat, predictor; dist=Normal()) =
+simple_aic(m::DynamicalSystemModel, dat, predictor; dist=Normal()) =
     2log(my_rss(m, dat, predictor)) + 2my_dof(m)
 
 
@@ -52,6 +52,7 @@ simple_aic(m::sindycModel, dat, predictor; dist=Normal()) =
 Computes the residual sum of squares error for a SINDYc model
 """
 my_rss(m::sindycModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
+my_rss(m::sindyModel, dat, predictor) = sum(m(dat) .- predictor).^2;
 
 """
 Computes the k-folds cross validation of a SINDYc model
@@ -85,7 +86,6 @@ Computes the k-folds cross validation of a SINDY model
 function sindy_cross_validate(m::sindyModel,
                             dat, predictor;
                             dist=Normal())
-    # BUG??
     n = size(dat, 2);
     my_retrain(train_ind) =
         sindy_retrain(m,

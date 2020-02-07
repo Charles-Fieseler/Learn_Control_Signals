@@ -252,9 +252,6 @@ end
 Makes a model like the given template, with a different training set
 """
 function sindy_retrain(m::sindyModel, X::Matrix, X_grad::Matrix)
-    if size(X,2) !== size(m.U,2)
-        error("DataError: Must pass new control signal if data is different")
-    end
     sindy(X, X_grad, m.ts;
         library=m.library,
         optimizer=m.optimizer,

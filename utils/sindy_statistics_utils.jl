@@ -57,7 +57,7 @@ my_rss(m::sindycModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
 Computes the k-folds cross validation of a SINDYc model
     From: https://mlbasejl.readthedocs.io/en/latest/crossval.html
 """
-function sindy_cross_validate(m::sindycModel,
+function sindyc_cross_validate(m::sindycModel,
                             dat, predictor;
                             dist=Normal())
     # BUG??
@@ -70,6 +70,29 @@ function sindy_cross_validate(m::sindycModel,
 
     scores = cross_validate(
         (ind)->sindyc_retrain(m, dat[:,ind], predictor[:,ind], m.U[:,ind]),
+        # TODO: the rss shouldn't need the data itself
+        (new_model, test_inds) -> my_rss(new_model,
+                        dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
+        n,              # total number of samples
+        Kfold(n, 3))    # cross validation plan: 3-fold
+    return mean(scores)
+end
+
+"""
+Computes the k-folds cross validation of a SINDY model
+    From: https://mlbasejl.readthedocs.io/en/latest/crossval.html
+"""
+function sindy_cross_validate(m::sindyModel,
+                            dat, predictor;
+                            dist=Normal())
+    # BUG??
+    n = size(dat, 2);
+    my_retrain(train_ind) =
+        sindy_retrain(m,
+        dat[:,train_ind], predictor[:,train_ind])
+
+    scores = cross_validate(
+        my_retrain,
         # TODO: the rss shouldn't need the data itself
         (new_model, test_inds) -> my_rss(new_model,
                         dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
@@ -174,4 +197,4 @@ end
 #
 export sindyc_ensemble, get_sindyc_ensemble_parameters,
         my_aic, my_aicc, my_dof,
-        sindy_cross_validate
+        sindy_cross_validate, sindyc_cross_validate

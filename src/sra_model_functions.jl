@@ -40,7 +40,7 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
         (out) = calc_best_random_subsample(m.dat,
                                         m.numerical_grad,
                                         p.sindy_library,
-                                        num_pts=1000, 
+                                        num_pts=1000,
                                         num_subsamples=20,
                                         val_list = p.sindy_terms_list;
                                         sindyc_ensemble_params=ensemble_p)
@@ -203,9 +203,7 @@ return err
 """
 function calc_coefficient_error(m::sra_stateful_object,
                                 t::sra_truth_object)
-    A1 = m.sindy_model.A
-    A2 = t.core_dyn_true.A
-    err = sum((A1 .- A2).^2)
+    err = calc_coefficient_error(m.sindy_model, t.core_dyn_true)
     return err
 end
 

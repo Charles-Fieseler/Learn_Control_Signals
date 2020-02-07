@@ -101,6 +101,16 @@ function sindy_cross_validate(m::sindyModel,
     return mean(scores)
 end
 
+
+"""
+Calculates the error in coefficients between two models
+"""
+function calc_coefficient_error(m1::DynamicalSystemModel, m2::DynamicalSystemModel)
+    err = sum((m1.A .- m2.A).^2)
+    return err
+end
+
+
 # sindy_cross_validate(m::sindycModel, dat, predictor; dist=Normal()) =
 #     sindy_cross_validate(m, dat, predictor)
 
@@ -197,4 +207,5 @@ end
 #
 export sindyc_ensemble, get_sindyc_ensemble_parameters,
         my_aic, my_aicc, my_dof,
-        sindy_cross_validate, sindyc_cross_validate
+        sindy_cross_validate, sindyc_cross_validate,
+        calc_coefficient_error

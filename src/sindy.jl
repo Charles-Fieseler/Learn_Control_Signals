@@ -75,8 +75,18 @@ control_signal(m::sindycModel, t) = m.B*m.U_func(t)
 control_signal(m::sindycModel) = m.B*m.U
 
 
+# Basic integration functions
+function simulate_model(m::DynamicalSystemModel, u0)
+    condition(u,t,integrator) = any(abs.(u).>1e4)
+    cb = DiscreteCallback(condition, terminate!)
+    prob = ODEProblem(m, u0, m.ts, [0], callback=cb)
+    return Array(solve(prob, Tsit5(), saveat=m.ts));
+end
+
+
 ###
 ### Export
 ###
 export sindyModel, sindycModel,
-    augment_data, intrinsic_dynamics, control_signal
+    augment_data, intrinsic_dynamics, control_signal,
+    simulate_model

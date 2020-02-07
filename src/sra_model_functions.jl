@@ -45,7 +45,7 @@ function fit_first_model(m::sra_stateful_object, initial_noise)
                                         m.numerical_grad,
                                         num_pts=1000,
                                         num_subsamples=20,
-                                        val_list = p.sindy_terms_list;
+                                        val_list=p.sindy_terms_list;
                                         sindyc_ensemble_params=ensemble_p,
                                         use_control=use_control)
         sindy_model = out[:best_model]
@@ -84,16 +84,26 @@ function fit_model(m::sra_stateful_object)
     p = m.parameters
     # New: change noise estimate based on previous guess
     ensemble_p = p.sindyc_ensemble_parameters
-    ensemble_p[:selection_dist] = Normal(0.0, m.noise_guess)
+    # ensemble_p[:selection_dist] = Normal(0.0, m.noise_guess)
     # Same
+    if is_using_control(m)
+            f = sindyc_ensemble
+        else
+            f = sindy_ensemble
+        end
     (sindy_model,best_criterion,all_criteria,all_models) =
-        sindyc_ensemble(
-                m.dat[:, m.subsample_ind],
-                m.numerical_grad[:, m.subsample_ind],
-                p.sindy_library,
-                p.sindy_terms_list;
-                var_names=p.variable_names,
-                ensemble_p...)
+         f(m.parameters.model_template,
+         m.dat[:, m.subsample_ind],
+         m.numerical_grad[:, m.subsample_ind],
+         m.parameters.sindy_terms_list; ensemble_p...)
+    # (sindy_model,best_criterion,all_criteria,all_models) =
+    #     sindyc_ensemble(
+    #             m.dat[:, m.subsample_ind],
+    #             m.numerical_grad[:, m.subsample_ind],
+    #             p.sindy_library,
+    #             p.sindy_terms_list;
+    #             var_names=p.variable_names,
+    #             ensemble_p...)
     # Only save if this is an improvement!
     if best_criterion < m.best_sindy_criteria
         if !m.is_saved

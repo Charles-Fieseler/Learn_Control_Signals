@@ -9,110 +9,110 @@ using LinearAlgebra: cond
 #####
 ##### Fitting function; effectively the default constructor
 #####
-"""
-Naive implementation of Sparse Identification of Nonlinear DYnamics
-with control (SINDYc). To actually use sparsity, the Lasso.jl package
-is required
-
-There are several nonlinear library terms that can be implemented via passing
-a list of strings and arguments via 'library', but a custom function can also be
-passed using 'custom_func'. Currently implemented library terms are:
-    ["cross_terms", order::Int]
-        Here, 'order' is how high of an order to do
-
-model = sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
-                library=Dict(),
-                use_lasso=false,
-                hard_threshold=nothing,
-                quantile_threshold=0.1,
-                var_names = ["x", "y", "z"])
-"""
-function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
-                library=Dict(),
-                use_lasso=false,
-                hard_threshold=nothing,
-                quantile_threshold=0.1,
-                num_terms=nothing,
-                var_names=nothing)
-                #TODO: allow custom library functions
-    @warn("DEPRECATED SYNTAX")
-    if X_grad == nothing
-        X_grad = numerical_derivative(X)
-    end
-    if var_names == nothing
-        # TODO: default names for more variables
-        default_names = ["x", "y", "z", "z2", "z3"]
-        var_names = default_names[1:size(X,1)]
-    end
-    if ts == nothing
-        ts = range(0, 1, length=size(X,2))
-        if size(U,1) > 1
-            @warn("Multidimensional control signals may not work")
-        end
-    end
-
-    # Get a model with the augmented data
-    if length(library) == 0
-        error("Must add library terms.")
-    end
-    n, m = size(X)
-    library = convert_string2function(library)
-    X_augmented = calc_augmented_data(X, library)
-    condition_number = cond(X_augmented);
-    if condition_number > 1e5
-        @warn("Very large condition number detected ($condition_number); SINDy algorithm may be unstable")
-    end
-    if !use_lasso
-        # i.e. is a dense model
-        A, B = dmdc(X_augmented, X_grad, U)
-        A = A[1:n, :]
-        if U !== nothing
-            B = B[1:n, :]
-        end
-    else
-        # UPDATE: use my own sequential least squares threshold
-        if U == nothing
-            A = sparse_regression(X_augmented, X_grad,
-                                hard_threshold=hard_threshold,
-                                quantile_threshold=quantile_threshold,
-                                num_terms=num_terms)
-        else
-            Ω = [X_augmented; U]
-            AB = sparse_regression(Ω, X_grad,
-                                hard_threshold=hard_threshold,
-                                quantile_threshold=quantile_threshold,
-                                num_terms=num_terms)
-            A = AB[:, 1:size(X_augmented,1)]
-            B = AB[:, size(X_augmented,1)+1:end]
-        end
-
-        # Do lasso with cross validation; loop over variables
-        # A = ones(n, size(X_augmented,1))
-        # df = build_dataframe(X_augmented, X_grad, library)
-        # regressors = names(df)[n+1:end]
-        # for i in 1:n
-            #TODO: the formula here may need to be updated
-            # this_predictor = names(df)[i] # Derivatives
-            # this_f = this_predictor ~ sum(StatsModels.terms.(regressors))
-            # lasso_model = fit(LassoModel, this_f, df;
-            #                 select=MinCVmse(Kfold(3,2)))
-        # end
-    end
-
-    if U == nothing
-        model = sindycModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
-                            library, var_names)
-    else
-        # TODO: make U_func work with multiple channels
-        # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
-        U_func = generate_map_rows_function(
-                (d)->CubicSplineInterpolation(ts,d), U)
-        model = sindycModel(ts, A, B, U, U_func,
-                            library, var_names )
-    end
-
-    return model
-end
+# """
+# Naive implementation of Sparse Identification of Nonlinear DYnamics
+# with control (SINDYc). To actually use sparsity, the Lasso.jl package
+# is required
+#
+# There are several nonlinear library terms that can be implemented via passing
+# a list of strings and arguments via 'library', but a custom function can also be
+# passed using 'custom_func'. Currently implemented library terms are:
+#     ["cross_terms", order::Int]
+#         Here, 'order' is how high of an order to do
+#
+# model = sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
+#                 library=Dict(),
+#                 use_lasso=false,
+#                 hard_threshold=nothing,
+#                 quantile_threshold=0.1,
+#                 var_names = ["x", "y", "z"])
+# """
+# function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
+#                 library=Dict(),
+#                 use_lasso=false,
+#                 hard_threshold=nothing,
+#                 quantile_threshold=0.1,
+#                 num_terms=nothing,
+#                 var_names=nothing)
+#                 #TODO: allow custom library functions
+#     @warn("DEPRECATED SYNTAX")
+#     if X_grad == nothing
+#         X_grad = numerical_derivative(X)
+#     end
+#     if var_names == nothing
+#         # TODO: default names for more variables
+#         default_names = ["x", "y", "z", "z2", "z3"]
+#         var_names = default_names[1:size(X,1)]
+#     end
+#     if ts == nothing
+#         ts = range(0, 1, length=size(X,2))
+#         if size(U,1) > 1
+#             @warn("Multidimensional control signals may not work")
+#         end
+#     end
+#
+#     # Get a model with the augmented data
+#     if length(library) == 0
+#         error("Must add library terms.")
+#     end
+#     n, m = size(X)
+#     library = convert_string2function(library)
+#     X_augmented = calc_augmented_data(X, library)
+#     condition_number = cond(X_augmented);
+#     if condition_number > 1e5
+#         @warn("Very large condition number detected ($condition_number); SINDy algorithm may be unstable")
+#     end
+#     if !use_lasso
+#         # i.e. is a dense model
+#         A, B = dmdc(X_augmented, X_grad, U)
+#         A = A[1:n, :]
+#         if U !== nothing
+#             B = B[1:n, :]
+#         end
+#     else
+#         # UPDATE: use my own sequential least squares threshold
+#         if U == nothing
+#             A = sparse_regression(X_augmented, X_grad,
+#                                 hard_threshold=hard_threshold,
+#                                 quantile_threshold=quantile_threshold,
+#                                 num_terms=num_terms)
+#         else
+#             Ω = [X_augmented; U]
+#             AB = sparse_regression(Ω, X_grad,
+#                                 hard_threshold=hard_threshold,
+#                                 quantile_threshold=quantile_threshold,
+#                                 num_terms=num_terms)
+#             A = AB[:, 1:size(X_augmented,1)]
+#             B = AB[:, size(X_augmented,1)+1:end]
+#         end
+#
+#         # Do lasso with cross validation; loop over variables
+#         # A = ones(n, size(X_augmented,1))
+#         # df = build_dataframe(X_augmented, X_grad, library)
+#         # regressors = names(df)[n+1:end]
+#         # for i in 1:n
+#             #TODO: the formula here may need to be updated
+#             # this_predictor = names(df)[i] # Derivatives
+#             # this_f = this_predictor ~ sum(StatsModels.terms.(regressors))
+#             # lasso_model = fit(LassoModel, this_f, df;
+#             #                 select=MinCVmse(Kfold(3,2)))
+#         # end
+#     end
+#
+#     if U == nothing
+#         model = sindycModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+#                             library, var_names)
+#     else
+#         # TODO: make U_func work with multiple channels
+#         # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
+#         U_func = generate_map_rows_function(
+#                 (d)->CubicSplineInterpolation(ts,d), U)
+#         model = sindycModel(ts, A, B, U, U_func,
+#                             library, var_names )
+#     end
+#
+#     return model
+# end
 
 
 # Overloading to work with a sindycModel directly

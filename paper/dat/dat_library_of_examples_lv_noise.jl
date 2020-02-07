@@ -50,13 +50,13 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 ##### Loop over additive noise
 #####
 
-# noise_vals = [0, 1e-2, 0.1]
-noise_vals = 0:0.05:0.3
+noise_vals = [0, 0.1]
+# noise_vals = 0:0.05:0.3
 # noise_factor = norm(numerical_grad)
 # noise_factor = 1;
 # noise_vals .*= noise_factor
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
-num_models = 20
+num_models = 5
 all_err = zeros(length(noise_vals), num_models)
 all_naive_err = zeros(length(noise_vals), num_models)
 all_i = zeros(length(noise_vals), num_models)
@@ -109,10 +109,11 @@ for (i,σ) in enumerate(noise_vals)
     println("=====================================")
 end
 
+all_err_saved = copy(all_err);
 # boxplot(collect(noise_vals)', all_err')
 
 # Remove outliers
-all_err_saved = copy(all_err);
+all_err = all_err_saved;
 for i in 1:size(all_err,1)
     all_err[i,:] = replace_outliers(all_err[i,:], 0)
 end
@@ -127,6 +128,9 @@ vec_i, std_i = mean_and_std(all_i, 2)
 plot(noise_vals, vec_i, ribbon=std_err)
     xlabel!("Noise")
     ylabel!("Number of iterations")
+
+vec_i, std_i = mean_and_std(all_i, 2)
+plot(noise_vals, )
 # plot_subsampled_points(this_model)
 # plot_subsampled_simulation(this_model, 2)
 # plot_subsampled_derivatives(this_model, 2)

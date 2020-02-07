@@ -108,10 +108,13 @@ function remove_outliers(dat::Vector, metric=median, max_val=3)
 end
 
 """
-Replaces outliers (by default 3 times the median) with replace_val.
-    This defaults to 'missing'
+Replaces outliers (by default 3 times the median) with 'replace_val'
+
+function replace_outliers(dat::Vector,
+            replace_val=NaN, metric=median, max_val=3)
 """
-function replace_outliers(dat::Vector, replace_val=missing, metric=median, max_val=3)
+function replace_outliers(dat::Vector,
+            replace_val=NaN, metric=median, max_val=3)
     new_dat = copy(dat)
     m = 3*median(abs.(dat))
     for i in 1:length(dat)

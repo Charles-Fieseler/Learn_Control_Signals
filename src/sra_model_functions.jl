@@ -119,7 +119,8 @@ function fit_model(m::sra_stateful_object)
         m.i += 1
         is_improved = true
     else
-        println("Iteration $(m.i+1) did not improve the fit (err=$best_criterion)")
+        println("Iteration $(m.i+1) did not improve the fit")
+        println("(old=$(m.best_sindy_criteria);new=$best_criterion)")
         println("Found equation:")
         print_equations(sindy_model)
         is_improved = false

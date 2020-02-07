@@ -13,7 +13,7 @@ numerical_grad = numerical_derivative(dat, ts)
 # Test new interface
 alg = slstQuantile(4, 0.2) # Will get extra terms
 sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
-test_model = sindy(dat, numerical_grad, ts,
+test_model = sindyc(dat, numerical_grad, nothing, ts,
                         library=sindy_library,
                         optimizer=alg)
 
@@ -41,12 +41,12 @@ t1 = get_nonzero_terms(test_model)
 t2 = get_nonzero_terms(core_dyn_true)
 # typeof(test_model) <: sindycModel
 # @testset "Type Tests" begin
-@test typeof(test_model) <: sindyModel
+@test typeof(test_model) <: sindycModel
 @test issubset(t2, t1)
 # end
 
 # Also test cross validation function
-null_model = sindy(dat, 0.1.*randn(size(dat)), ts,
+null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,
                         library=sindy_library,
                         optimizer=alg)
 # null_model = sindyc(dat, 0.1.*randn(size(dat)), nothing, ts,

@@ -72,7 +72,7 @@ end
 """
 Calculates the residual of the learned SINDy dynamics
 """
-function calculate_residual(m::sindyc_model, dat, dat_grad)
+function calculate_residual(m::sindycModel, dat, dat_grad)
     # return dat_grad .- m(dat)
     return dat_grad .- intrinsic_dynamics(m, dat)
 end

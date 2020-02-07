@@ -15,7 +15,7 @@ calc_distribution_of_models(dat,
                                         start_ind=101),
                                         val_list = Iterators.product(1:3,1:3))
 
-Returns both the Turing chain and the sindyc_model used as the
+Returns both the Turing chain and the sindycModel used as the
         priors for the coefficients.
 """
 function calc_distribution_of_models(dat,
@@ -139,7 +139,7 @@ function calc_best_random_subsample(dat2, numerical_grad2, sindy_library;
 
     # Just do SINDY here, not Turing yet
     sz = size(initial_subsamples)
-    all_final_models2 = Vector{sindyc_model}(undef,sz)
+    all_final_models2 = Vector{sindycModel}(undef,sz)
     all_errL2 = zeros(sz)
     for (i, inds) in enumerate(initial_subsamples)
         (all_final_models2[i], all_errL2[i], _, _, _) =

@@ -10,7 +10,7 @@ using MLBase # Just for cross validation
 Gets number of degrees of freedom, which is equal to the
 number of nonzero terms + 1 for noise
 """
-my_dof(m::sindyc_model) = length(get_nonzero_terms(m)) + 1
+my_dof(m::sindycModel) = length(get_nonzero_terms(m)) + 1
 
 
 #####
@@ -19,7 +19,7 @@ my_dof(m::sindyc_model) = length(get_nonzero_terms(m)) + 1
 """
 Akaike Information Criterion (AIC) for SINDy models
 """
-my_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
+my_aic(m::sindycModel, dat, predictor; dist=Normal()) =
     -2loglikelihood(dist, (m(dat) .- predictor)') + 2my_dof(m)
 
 
@@ -27,7 +27,7 @@ my_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
 Corrected Akaike Information Criterion.
     Used for small sample sizes (Hurvich and Tsai 1989)
 """
-function my_aicc(m::sindyc_model, dat, predictor; dist=Normal())
+function my_aicc(m::sindycModel, dat, predictor; dist=Normal())
     k = my_dof(m)
     n = length(dat) # equal to numel(dat)
     correction = 2k*(k+1)/(n-k-1)
@@ -39,7 +39,7 @@ end
 Akaike Information Criterion (AIC), without being 'clever' and using an error
     distribution as in the above function
 """
-simple_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
+simple_aic(m::sindycModel, dat, predictor; dist=Normal()) =
     2log(my_rss(m, dat, predictor)) + 2my_dof(m)
 
 
@@ -51,39 +51,34 @@ simple_aic(m::sindyc_model, dat, predictor; dist=Normal()) =
 """
 Computes the residual sum of squares error for a SINDYc model
 """
-my_rss(m::sindyc_model, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
+my_rss(m::sindycModel, dat, predictor) = sum(m(dat, 0) .- predictor).^2;
 
 """
 Computes the k-folds cross validation of a SINDYc model
     From: https://mlbasejl.readthedocs.io/en/latest/crossval.html
 """
-function sindy_cross_validate(m::sindyc_model,
-                            dat, predictor,
-                            optimizer::SparseSolver;
+function sindy_cross_validate(m::sindycModel,
+                            dat, predictor;
                             dist=Normal())
+    # BUG??
     n = size(dat, 2);
-    # zzz
-    # make_model(train_ind) =
-    #     sindyc(dat[:,train_ind], predictor[:,train_ind], m.U;
-    #                             library=m.library,
-    #                             use_lasso=true,
-    #                             quantile_threshold=x,
-    #                             var_names=m.variable_names)
-    make_model(train_ind) =
-        sindyc(dat[:,train_ind], predictor[:,train_ind], m.U;
-                                library=m.library,
-                                optimizer=optimizer,
-                                var_names=m.variable_names)
+    @show n
+    @show size(m.U)
+    my_retrain(train_ind) =
+        sindyc_retrain(m,
+        dat[:,train_ind], predictor[:,train_ind], m.U[:,train_ind])
+
     scores = cross_validate(
-        make_model,        # training function
+        (ind)->sindyc_retrain(m, dat[:,ind], predictor[:,ind], m.U[:,ind]),
         # TODO: the rss shouldn't need the data itself
-        (c, test_inds) -> my_rss(m, dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
+        (new_model, test_inds) -> my_rss(new_model,
+                        dat[:, test_inds], predictor[:, test_inds]),  # evaluation function
         n,              # total number of samples
         Kfold(n, 3))    # cross validation plan: 3-fold
     return mean(scores)
 end
 
-# sindy_cross_validate(m::sindyc_model, dat, predictor; dist=Normal()) =
+# sindy_cross_validate(m::sindycModel, dat, predictor; dist=Normal()) =
 #     sindy_cross_validate(m, dat, predictor)
 
 ################################################################################
@@ -119,6 +114,7 @@ function sindyc_ensemble(X, X_grad, library, val_list;
     all_models = Vector(undef, n)
     all_criteria = zeros(n)
     # Convenience function
+    # TODO: Update with optimizer interface
     make_model(x) = if sparsification_mode == "quantile"
         sindyc(X, X_grad, U, ts; library=library,
                                 use_lasso=true,
@@ -177,4 +173,5 @@ end
 
 #
 export sindyc_ensemble, get_sindyc_ensemble_parameters,
-        my_aic, my_aicc, my_dof
+        my_aic, my_aicc, my_dof,
+        sindy_cross_validate

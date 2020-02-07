@@ -12,7 +12,7 @@ Takes in a SINDy model and returns a Turing-compatible model that defines
 
 Note: helpful NN analogue: https://turing.ml/dev/tutorials/3-bayesnn/
 """
-function convert_sindy_to_turing(model::sindyc_model;
+function convert_sindy_to_turing(model::sindycModel;
                                 dat_noise_prior=Normal(5, 5.0),
                                 coef_noise_std=1.0)
     n_in, n_aug = size(model.A)
@@ -40,11 +40,11 @@ Takes in a SINDy model and returns a Turing-compatible model that defines
     priors on each parameter with the proper variable names
     Enforces the 0s of the original model
 
-    convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
+    convert_sindy_to_turing_enforce_zeros(model::sindycModel;
                                     dat_noise_prior=Normal(5, 5.0),
                                     coef_noise_std=1.0)
 """
-function convert_sindy_to_turing_enforce_zeros(model::sindyc_model;
+function convert_sindy_to_turing_enforce_zeros(model::sindycModel;
                                 dat_noise_prior=Normal(5, 5.0),
                                 coef_noise_std=1.0)
     n_in, n_aug = size(model.A)
@@ -69,7 +69,7 @@ end
 #####
 ##### Helper functions for vector and matrix conversion
 #####
-function sindy_vec2mat(model::sindyc_model, coef::AbstractVector)
+function sindy_vec2mat(model::sindycModel, coef::AbstractVector)
     return reshape(coef, size(model.A))
 end
 
@@ -81,7 +81,7 @@ end
 ##### Helper functions for readable prediction
 #####
 """Skips full matrix multiplication; only does the nonzero coefficients"""
-function sindy_predict(model::sindyc_model, coef, dat; nonzero_terms=nothing)
+function sindy_predict(model::sindycModel, coef, dat; nonzero_terms=nothing)
     if nonzero_terms==nothing
         nonzero_terms=get_nonzero_terms(model, linear_indices=false)
     end
@@ -99,17 +99,17 @@ end
 ##### Creating model instances from chains
 #####
 """
-function sindy_from_chain(model_template::sindyc_model,
+function sindy_from_chain(model_template::sindycModel,
                           chain::MCMCChains.AbstractChains;
                           enforced_zeros=true)
 
-Creates a sindyc_model object (nonlinear dynamical system) from
+Creates a sindycModel object (nonlinear dynamical system) from
 a chain using the template of model terms in 'model_template';
     If enforced_zeros=true, then the zeros of the 'model_template'
     are enforced; the nonzero terms must match the number of
     elements in the chain minus one (the last one is assumed to be noise)
 """
-function sindy_from_chain(model_template::sindyc_model,
+function sindy_from_chain(model_template::sindycModel,
                           chain::MCMCChains.AbstractChains;
                           enforced_zeros=true)
     if enforced_zeros
@@ -147,7 +147,7 @@ function sindy_from_chain(model_template::sindyc_model,
     end
     # Assume these parameters are the A matrix
     A = sindy_vec2mat(model_template, coef_vec)
-    new_model = sindyc_model(ts, A,
+    new_model = sindycModel(ts, A,
             model_template.B, model_template.U,
             model_template.U_func, model_template.library,
             model_template.variable_names)

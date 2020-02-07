@@ -13,8 +13,9 @@ module PkgSRA
     using Lasso
 
     # Core numerical algorithms with control
+    include("../utils/sparse_regression_functions.jl")
     include("numerical_derivatives.jl")
-    include("sindyc.jl")
+    include("sindy.jl")
     include("dmdc.jl")
     include("initialize_control_signal.jl")
     include("forcing_functions.jl")
@@ -25,8 +26,8 @@ module PkgSRA
     include("../utils/control_utils.jl")
     include("../utils/posterior_sampling_utils.jl")
     include("../utils/combinatorics_utils.jl");
-    include("../utils/sparse_regression_functions.jl")
     include("../utils/sindy_utils.jl")
+    include("../utils/sindy_statistics_utils.jl")
 
     # State of the iterative algorithm, and plotting utilities
     include("../utils/main_algorithm_utils.jl")

@@ -100,19 +100,24 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     end
 
     if U == nothing
-        model = sindyc_model(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+        model = sindycModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
                             library, var_names)
     else
         # TODO: make U_func work with multiple channels
         # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
         U_func = generate_map_rows_function(
                 (d)->CubicSplineInterpolation(ts,d), U)
-        model = sindyc_model(ts, A, B, U, U_func,
+        model = sindycModel(ts, A, B, U, U_func,
                             library, var_names )
     end
 
     return model
 end
+
+
+# Overloading to work with a sindycModel directly
+# function sparse_regression(m::sindycModel, X, X_grad)
+#   TODO
 
 
 """
@@ -166,8 +171,8 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
     # Use my own sequential least squares threshold objects
     if U == nothing
         A = sparse_regression(optimizer, X_augmented, X_grad)
-        model = sindyc_model(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
-                            library, var_names)
+        model = sindycModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+                            library, var_names, optimizer)
     else
         Ω = [X_augmented; U]
         AB = sparse_regression(optimizer, Ω, X_grad)
@@ -177,25 +182,122 @@ function sindyc(X, X_grad=nothing, U=nothing, ts=nothing;
         # U_func(t) = CubicSplineInterpolation(ts, vec(U))(t)
         U_func = generate_map_rows_function(
                 (d)->CubicSplineInterpolation(ts,d), U)
-        model = sindyc_model(ts, A, B, U, U_func,
-                            library, var_names )
+        model = sindycModel(ts, A, B, U, U_func,
+                            library, var_names, optimizer)
     end
 
     return model
+end
+
+
+"""
+Simple implementation of Sparse Identification of Nonlinear DYnamics
+(SINDy).
+
+New optimizer-object based interface
+
+There are several nonlinear library terms that can be implemented via passing
+a list of strings and arguments via 'library', but a custom function can also be
+passed using 'custom_func'. Currently implemented library terms are:
+    ["cross_terms", order::Int]
+        Here, 'order' is how high of an order to do
+
+model = sindyc(X, X_grad=nothing, ts=nothing;
+                library=Dict(),
+                optimizer=denseSolver(),
+                derivative_function=numerical_derivative,
+                var_names=nothing)
+"""
+function sindy(X, X_grad=nothing, ts=nothing;
+                library=Dict(),
+                optimizer=denseSolver(),
+                derivative_function=numerical_derivative,
+                var_names=nothing)
+                #TODO: allow custom library functions
+    if X_grad == nothing; X_grad = derivative_function(X); end
+    if var_names == nothing
+        # TODO: default names for more variables
+        default_names = ["x", "y", "z", "x2", "y2", "z2"]
+        var_names = default_names[1:size(X,1)]
+    end
+    if ts == nothing
+        ts = range(0, 1, length=size(X,2))
+    end
+
+    # Get a model with the augmented data
+    if length(library) == 0
+        error("Must add library terms.")
+    end
+    n, m = size(X)
+    library = convert_string2function(library)
+    X_augmented = calc_augmented_data(X, library)
+    condition_number = cond(X_augmented);
+    if condition_number > 1e5
+        @warn("Very large condition number detected ($condition_number); SINDy algorithm may be unstable")
+    end
+    # Use my own sequential least squares threshold objects
+    A = sparse_regression(optimizer, X_augmented, X_grad)
+    model = sindyModel(ts, A, zeros(n,1), zeros(1, m), (t)->zeros(1),
+                        library, var_names, optimizer)
+
+    return model
+end
+
+
+###
+### Helper functions for making many similar models
+###
+
+"""
+Makes a model like the given template, with a different training set
+"""
+function sindy_retrain(m::sindyModel, X::Matrix, X_grad::Matrix)
+    if size(X,2) !== size(m.U,2)
+        error("DataError: Must pass new control signal if data is different")
+    end
+    sindy(X, X_grad, m.ts;
+        library=m.library,
+        optimizer=m.optimizer,
+        var_names=m.variable_names)
+end
+
+
+"""
+Makes a model like the given template, with a different training set
+"""
+function sindyc_retrain(m::sindycModel, X::Matrix, X_grad::Matrix)
+    if size(X,2) !== size(m.U,2)
+        error("DataError: Must pass new control signal if data is different")
+    end
+    sindyc(X, X_grad, m.U, m.ts;
+        library=m.library,
+        optimizer=m.optimizer,
+        var_names=m.variable_names)
+end
+
+
+function sindyc_retrain(m::sindycModel, X::Matrix, X_grad::Matrix, U::VecOrMat)
+    if size(X,2) !== size(m.U,2)
+        error("DataError: Control signal ($(size(m.U,2))) should be same length as data ($(size(X,2)))")
+    end
+    sindyc(X, X_grad, m.U, m.ts;
+        library=m.library,
+        optimizer=m.optimizer,
+        var_names=m.variable_names)
 end
 
 #####
 ##### Helper functions for pretty printing
 #####
 """
-print_equations(model::sindyc_model;
+print_equations(model::sindycModel;
                      var_names=nothing, tol=1e-4, digits=1)
 
 Prints equations of a SINDy model using saved or passed variable names
     Note: if 0.0 is displayed, this means the coefficient was nonzero to the
     tolerance specified in 'tol' but below the rounding threshold
 """
-function print_equations(model::sindyc_model;
+function print_equations(model::sindycModel;
                          var_names=nothing, tol=1e-4, digits=1)
     n, m = size(model.A)
     if var_names == nothing
@@ -226,7 +328,7 @@ function print_equations(model::sindyc_model;
     # println()
 end
 
-function get_nonzero_terms(model::sindyc_model; linear_indices=false)
+function get_nonzero_terms(model::sindycModel; linear_indices=false)
     # A = reshape(model.A, length(model.A))
     if linear_indices
         lin = LinearIndices(model.A)
@@ -236,7 +338,7 @@ function get_nonzero_terms(model::sindyc_model; linear_indices=false)
     end
 end
 
-function get_nonzero_term_names(model::sindyc_model)
+function get_nonzero_term_names(model::sindycModel)
     rhs_names = build_term_names(model)
     term_ind = get_nonzero_terms(model)
     lhs_names = model.variable_names
@@ -356,9 +458,9 @@ FUNCTION_DICT = Dict("cross_terms"=>calc_cross_terms,
 
      return term_names
  end
- build_term_names(model::sindyc_model, var_names) =
+ build_term_names(model::sindycModel, var_names) =
      build_term_names(model.library, var_names)
- build_term_names(model::sindyc_model) =
+ build_term_names(model::sindycModel) =
      build_term_names(model.library, model.variable_names)
 
 
@@ -431,4 +533,5 @@ end
 export calc_augmented_data, convert_string2function, calc_constant,
     FUNCTION_DICT, calc_cross_terms, calc_power_terms,
     build_dataframe, sindyc, print_equations,
-    get_nonzero_terms, get_nonzero_term_names, build_term_names
+    get_nonzero_terms, get_nonzero_term_names, build_term_names,
+    sindyc_retrain

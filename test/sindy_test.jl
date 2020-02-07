@@ -72,6 +72,48 @@ err_null = sindy_cross_validate(null_model, dat, numerical_grad)
 end
 
 
+## One more cross validation test
+include("../examples/example_lotkaVolterra.jl")
+dat = Array(solve_lv_system())
+numerical_grad = numerical_derivative(dat, ts)
+
+# First, a decent model on one variable
+sindy_library = Dict("cross_terms"=>2,"constant"=>nothing);
+lib = convert_string2function(sindy_library)
+#      x   y   c   xx xy yy
+A1 = [[0.8 0   0   0 -1.4 0 ];
+      [0  0   0   0   0   1e-6 ]]
+n = size(A, 1)
+m1 = sindyModel(ts, A1, lib ,["x", "y"])
+
+# Second, a decent model on both variables
+#      x   y   c   xx xy yy
+A2 = [[0.7 0   0   0 -1.3 1e-6 ];
+      [0  -0.7 0  1e-6 0.7  0]]
+m2 = sindyModel(ts, A2, lib ,["x", "y"])
+
+## Calculate errors
+# Coefficients
+cerr1 = calc_coefficient_error(m1, core_dyn_true)
+cerr2 = calc_coefficient_error(m2, core_dyn_true)
+# Residual
+rss0 = my_rss(core_dyn_true, dat, numerical_grad)
+rss1 = my_rss(m1, dat, numerical_grad)
+rss2 = my_rss(m2, dat, numerical_grad)
+
+#
+@testset "Error calculations" begin
+    @test cerr1 > cerr2
+    @test rss1 > rss0
+    @test rss2 > rss0
+    @test rss2 > rss1
+end
+
+u0 = dat[1,:]
+plot_sindy_model(m1, u0)
+
+
+
 # SINDY tests: up to cubed terms
 
 # Generate test data: Van der Pol

@@ -4,7 +4,7 @@ using DataStructures
 ##### Abstract type
 #####
 
-struct DynamicalSystemModel end
+abstract type DynamicalSystemModel end
 
 #####
 ##### SINDY model object and methods
@@ -26,8 +26,9 @@ sindyModel(ts, A, lib, var) =
     sindyModel(ts, A, lib, var, denseSolver())
 
 (m::sindyModel)(X) = m.A*augment_data(m, X)
-(m::DynamicalSystemModel)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
+(m::sindyModel)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
 
+# Functions for both uncontrolled and controlled
 augment_data(m::DynamicalSystemModel, X) =
     calc_augmented_data(X, m.library)
 
@@ -58,6 +59,7 @@ sindycModel(ts, A, B, U, Uf, lib, var) =
 
 (m::sindycModel)(X) = m.A*augment_data(m, X) .+ m.B*m.U
 (m::sindycModel)(X, t) = m.A*augment_data(m, X) .+ m.B*m.U_func(t)
+(m::sindycModel)(u::AbstractArray,p,t) = m(u, t) # OrdinaryDiffEq syntax
 
 intrinsic_dynamics(m::sindycModel, X) = m.A*augment_data(m, X)
 control_signal(m::sindycModel, t) = m.B*m.U_func(t)

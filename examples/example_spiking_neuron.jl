@@ -76,7 +76,7 @@ sindy_library = Dict(
     "cross_terms"=>2,
     "constant"=>nothing
 );
-core_dyn_true = sindycModel(ts, A, zeros(n,1), zeros(1, 1), (t)->zeros(1),
+core_dyn_true = sindyModel(ts, A,
                             convert_string2function(sindy_library),
                             ["x", "y"])
 

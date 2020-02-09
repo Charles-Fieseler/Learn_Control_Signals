@@ -62,7 +62,9 @@ noise_vals = 0.0:0.05:0.2
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
 num_models = 10
 all_err = zeros(length(noise_vals), num_models)
+all_err_deriv = zeros(length(noise_vals), num_models)
 all_naive_err = zeros(length(noise_vals), num_models)
+all_naive_err_deriv = zeros(length(noise_vals), num_models)
 all_i = zeros(length(noise_vals), num_models)
 
 # Make model template
@@ -92,6 +94,8 @@ for (i,σ) in enumerate(noise_vals)
         print_true_equations(this_truth)
         print_current_equations(this_model)
         all_naive_err[i, j] = calc_coefficient_error(this_model, this_truth)
+        all_naive_err_deriv[i, j] = rss_sindy_derivs(
+                this_model.sindy_model, dat, numerical_grad)
 
         #################################################################
         ### Iterate
@@ -105,6 +109,8 @@ for (i,σ) in enumerate(noise_vals)
         println("Finished with $(this_model.i) iterations")
 
         all_err[i, j] = calc_coefficient_error(this_model, this_truth)
+        all_err_deriv[i, j] = rss_sindy_derivs(
+                this_model.sindy_model, dat, numerical_grad)
         all_i[i, j] = this_model.i
         println("Final error in coefficients = $(all_err[i, j])")
         println("")
@@ -116,12 +122,13 @@ end
 all_err_saved = copy(all_err);
 # boxplot(collect(noise_vals)', all_err')
 
-# Remove outliers
 all_err = all_err_saved;
+# Remove outliers
 # for i in 1:size(all_err,1)
 #     all_err[i,:] = replace_outliers(all_err[i,:], 0)
 # end
-vec_err, std_err = mean_and_std(all_err, 2)
+coef_norm = sum(core_dyn_true.A.^2)
+vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
 # vec_err, std_err = mean_and_std(all_err)
 plot(noise_vals, vec_err, ribbon=std_err)
     xlabel!("Noise")
@@ -135,7 +142,7 @@ plot(noise_vals, vec_err, ribbon=std_err)
 #     title!("Average number of iterations to convergence")
 
 vec_naive = mean(all_naive_err, dims=2)
-vec_diff, std_diff = mean_and_std(vec_naive .- all_err, 2)
+vec_diff, std_diff = mean_and_std((vec_naive .- all_err)./coef_norm, 2)
 plot(noise_vals, vec_diff, ribbon=std_diff)
     xlabel!("Noise")
     ylabel!("Average improvement")

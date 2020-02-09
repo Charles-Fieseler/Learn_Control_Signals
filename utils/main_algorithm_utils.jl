@@ -150,7 +150,7 @@ function calc_best_random_subsample(model_template, dat2,
     all_final_models2 = Vector{DynamicalSystemModel}(undef,sz)
     all_errL2 = zeros(sz)
     current_error = max_error+1
-    max_iter = 3
+    max_iter = 2
     this_iter = 1
     if use_control; f = sindyc_ensemble; else; f = sindy_ensemble end
     while current_error > max_error
@@ -158,7 +158,7 @@ function calc_best_random_subsample(model_template, dat2,
             println("Random subsampling gave a large error ($current_error), retrying")
         end
         for (i, inds) in enumerate(initial_subsamples)
-            println("Testing random subsample $i/$(length(initial_subsamples))")
+            i%10==0 && println("Testing random subsample $i/$(length(initial_subsamples))")
             (all_final_models2[i], all_errL2[i], _, _, _) =
                  f(model_template, dat2[:,inds], numerical_grad2[:, inds],
                     val_list; sindyc_ensemble_params...)

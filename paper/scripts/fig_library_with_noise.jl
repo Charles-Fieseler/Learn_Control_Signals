@@ -9,7 +9,7 @@ include("paper_settings.jl")
 #####
 ##### Plot AND save using external function
 #####
-this_dat_name = "dat_library_of_examples_lv_noise_"
+this_dat_name = "dat_library_with_noise_lv_"
 plot_final = plot_library_noise(this_dat_name, "Lotka Volterra";
                         plot_opt=plot_opt)
 

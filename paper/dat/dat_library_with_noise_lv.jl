@@ -125,7 +125,7 @@ vec_naive_deriv, std_naive_deriv = mean_and_std(all_naive_err_deriv, 2)
 #####
 ##### Save Lotka-Volterra data
 #####
-this_dat_name = "dat_library_of_examples_lv_noise_"
+this_dat_name = "dat_library_with_noise_lv_"
 
 save_for_plotting(noise_vals,
                 vec_naive, std_naive, vec_err, std_err,

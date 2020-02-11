@@ -293,6 +293,23 @@ function save_for_plotting(m::sra_stateful_object,
     @save fname dat_ctr ctr_guess2 #sindy_grad_ctr
 end
 
+
+
+# Note: just saving matrices in a standard way
+function save_for_plotting(noise_vals,
+                vec_naive, std_naive, vec_err, std_err,
+                vec_deriv, std_deriv, vec_naive_deriv, std_naive_deriv,
+                this_dat_name="test")
+    this_dat_name = DAT_FOLDERNAME*this_dat_name;
+
+    fname = this_dat_name*"coefficients.bson"
+    @save fname noise_vals vec_naive std_naive vec_err std_err
+
+    fname = this_dat_name*"derivatives.bson";
+    @save fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+end
+
+
 ###
 ### Utilities
 ###

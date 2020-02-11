@@ -17,13 +17,13 @@ import PkgSRA.plot_sindy_model
 # end
 
 function plot_data(m::sra_stateful_object, which_dim=1)
-    names = m.parameters.variable_names
+    names = m.sindy_model.variable_names
     plot(m.ts,m.dat[which_dim,:], label=names[which_dim]);
     title!("Raw data (variable $which_dim)")
 end
 
 function plot_derivative(m::sra_stateful_object, which_dim=1)
-    names = m.parameters.variable_names
+    names = m.sindy_model.variable_names
     plot(m.ts,m.numerical_grad[which_dim,:], label=names[which_dim]);
     title!("Numerical derivative (variable $which_dim)")
 end
@@ -54,7 +54,7 @@ end
 
 function plot_subsampled_points_and_control(m::sra_stateful_object,
             t::sra_truth_object, which_dim=1)
-    plot_data_and_control(m, t, which_dim)
+    plot_data_and_control(m, t, which_dim=which_dim)
     dat_sub = m.dat[:, m.subsample_ind]
     scatter!(m.ts[m.subsample_ind], dat_sub[which_dim,:], color=:blue)
     title!("Subsampled points plotted on data (Variable $which_dim)")
@@ -87,7 +87,7 @@ function plot_sindy_model(m::sra_stateful_object, which_dim=1)
         simulate_model(m)
     end
     plot_data(m, which_dim)
-    name = m.parameters.variable_names[which_dim]
+    name = m.sindy_model.variable_names[which_dim]
     plot!(m.ts, m.sindy_dat[which_dim,:],
         label="Simulation ($name)");
     title!("Integration of current model")
@@ -96,7 +96,7 @@ end
 
 function plot_sindy_derivatives(m::sra_stateful_object, which_dim=1)
     plot_derivative(m, which_dim)
-    name = m.parameters.variable_names[which_dim]
+    name = m.sindy_model.variable_names[which_dim]
     sindy_deriv = m.sindy_model(m.dat, 0)
     plot!(m.ts, sindy_deriv[which_dim,:],
         label="Simulation ($name)");

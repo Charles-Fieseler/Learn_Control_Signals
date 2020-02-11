@@ -1,11 +1,15 @@
-################################################################################
-#####
-##### Define a function for further library examples
-#####
 
+#####
+##### Global settings
+#####
 plot_opt = Dict(:titlefontsize=>28,
         :xticks=>false, :yticks=>false, :zticks=>false,
         :legend=>false, :fontfamily=>:serif)
+
+################################################################################
+#####
+##### Define a function for library examples
+#####
 
 function plot_library(this_dat_name, this_fig_name, system_name="";
                         plot_opt=plot_opt,
@@ -86,6 +90,62 @@ function plot_library(this_dat_name, this_fig_name, system_name="";
                 plot_residual1, plot_ctr_guess, plot_ctr_true, plot_reconstruction,
                 layout=lay)
         plot!(size=(2000, 250))
+
+        return plot_final
+end
+
+################################################################################
+#####
+##### Define a function for noise studies
+#####
+
+function plot_library_noise(this_dat_name, system_name="";
+                        plot_opt=plot_opt)
+
+        plot_opt[:xticks] = true
+        plot_opt[:yticks] = true
+        plot_opt[:tickfontsize] = 16
+
+        ## Load
+        this_dat_name = DAT_FOLDERNAME*this_dat_name;
+
+        fname = this_dat_name*"coefficients.bson"
+        @load fname noise_vals vec_naive std_naive vec_err std_err
+
+        fname = this_dat_name*"derivatives.bson";
+        @load fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+
+        ## First panel: Error in coefficients
+        coef_plot = plot(noise_vals, vec_naive, ribbon=std_naive,
+                        label="Intial SINDy", lw=3; plot_opt...)
+            plot!(noise_vals, vec_err, ribbon=std_err, lw=3,
+                        label="Final iteration")
+            xlabel!("Noise", guidefontsize=24)
+            ylabel!("Error", guidefontsize=20)
+            # title!("Fractional Error in Coefficients")
+            title!(system_name*" (coefficients)")
+
+        ## Second panel: Error in derivatives
+        deriv_plot = plot(noise_vals, vec_naive_deriv, ribbon=std_naive_deriv,
+                        label="Intial SINDy", lw=3; plot_opt...)
+            plot!(noise_vals, vec_deriv, ribbon=std_deriv, lw=3,
+                        label="Final iteration")
+            xlabel!("Noise", guidefontsize=24)
+            ylabel!("Error", guidefontsize=20)
+            # title!("Error in Model Derivatives")
+            title!(system_name*" (derivatives)")
+
+        ##
+        ## Put it all together
+        ##
+        lay = @layout [a b]
+
+        plot_final = plot(
+            coef_plot, deriv_plot, layout=lay)
+        plot!(size=(2000, 250))
+
+        ## Save
+        # savefig(plot_final, this_dat_name * ".png")
 
         return plot_final
 end

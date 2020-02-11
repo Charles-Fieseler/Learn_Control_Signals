@@ -119,10 +119,10 @@ for (i,σ) in enumerate(noise_vals)
     println("=====================================")
 end
 
-all_err_saved = copy(all_err);
+# all_err_saved = copy(all_err);
 # boxplot(collect(noise_vals)', all_err')
 
-all_err = all_err_saved;
+# all_err = all_err_saved;
 # Remove outliers
 # for i in 1:size(all_err,1)
 #     all_err[i,:] = replace_outliers(all_err[i,:], 0)
@@ -146,11 +146,23 @@ vec_diff, std_diff = mean_and_std((vec_naive .- all_err)./coef_norm, 2)
 plot(noise_vals, vec_diff, ribbon=std_diff)
     xlabel!("Noise")
     ylabel!("Average improvement")
-# plot(noise_vals, )
-# plot_subsampled_points(this_model)
+    title!("Percentage coefficient improvement")
+
+# Error in derivatives: only look at where there's no control
+# ind = this_model.subsample_ind
+vec_naive_deriv = mean(all_naive_err_deriv, dims=2)
+vec_deriv = mean(all_err_deriv, dims=2)
+vec_diff_deriv, std_diff_deriv = mean_and_std(vec_naive_deriv .- vec_deriv, 2)
+plot(noise_vals, vec_diff_deriv, ribbon=std_diff_deriv)
+    xlabel!("Noise")
+    ylabel!("Average improvement")
+    title!("Error in derivatives")
+
+# Model visualizations
+plot_subsampled_points(this_model)
 # plot_subsampled_simulation(this_model, 2)
-# plot_subsampled_derivatives(this_model, 2)
-# plot_residual(this_model)
+plot_subsampled_derivatives(this_model, 1)
+plot_residual(this_model)
 
 # plot_subsampled_points_and_control(this_model, this_truth)
 

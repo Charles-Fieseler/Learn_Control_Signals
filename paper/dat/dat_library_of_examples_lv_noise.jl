@@ -55,16 +55,18 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 #####
 
 # noise_vals = [0, 0.1]
-noise_vals = 0.0:0.05:0.2
+noise_vals = 0.0:0.05:0.3
 # noise_factor = norm(numerical_grad)
 # noise_factor = 1;
 # noise_vals .*= noise_factor
 # noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
-num_models = 10
+num_models = 20
 all_err = zeros(length(noise_vals), num_models)
 all_err_deriv = zeros(length(noise_vals), num_models)
+all_err_deriv_subsample = zeros(length(noise_vals), num_models)
 all_naive_err = zeros(length(noise_vals), num_models)
 all_naive_err_deriv = zeros(length(noise_vals), num_models)
+
 all_i = zeros(length(noise_vals), num_models)
 
 # Make model template
@@ -95,7 +97,7 @@ for (i,σ) in enumerate(noise_vals)
         print_current_equations(this_model)
         all_naive_err[i, j] = calc_coefficient_error(this_model, this_truth)
         all_naive_err_deriv[i, j] = rss_sindy_derivs(
-                this_model.sindy_model, dat, numerical_grad)
+                this_model.sindy_model, dat, numerical_grad) ./ length(dat)
 
         #################################################################
         ### Iterate
@@ -111,6 +113,10 @@ for (i,σ) in enumerate(noise_vals)
         all_err[i, j] = calc_coefficient_error(this_model, this_truth)
         all_err_deriv[i, j] = rss_sindy_derivs(
                 this_model.sindy_model, dat, numerical_grad)
+        ind = this_model.subsample_ind
+        all_err_deriv_subsample[i, j] = rss_sindy_derivs(
+                this_model.sindy_model, dat[:,ind], numerical_grad[:,ind]) ./
+                (length(ind)*size(dat,1))
         all_i[i, j] = this_model.i
         println("Final error in coefficients = $(all_err[i, j])")
         println("")
@@ -127,42 +133,49 @@ end
 # for i in 1:size(all_err,1)
 #     all_err[i,:] = replace_outliers(all_err[i,:], 0)
 # end
-coef_norm = sum(core_dyn_true.A.^2)
-vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
-# vec_err, std_err = mean_and_std(all_err)
-plot(noise_vals, vec_err, ribbon=std_err)
-    xlabel!("Noise")
-    ylabel!("Coefficient Error")
-
-# vec_i, std_i = mean_and_std(all_i, 2)
+# coef_norm = sum(core_dyn_true.A.^2)
+# vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
 # # vec_err, std_err = mean_and_std(all_err)
-# plot(noise_vals, vec_i, ribbon=std_err)
+# plot(noise_vals, vec_err, ribbon=std_err)
+#     xlabel!("Noise")
+#     ylabel!("L2 Error")
+#     title!("Error in coefficients for final model")
+
+# vec_i, std_i = mean_and_std(all_i.-1, 2)
+# plot(noise_vals, vec_i, ribbon=std_i)
 #     xlabel!("Noise")
 #     ylabel!("Number of iterations")
 #     title!("Average number of iterations to convergence")
 
-vec_naive = mean(all_naive_err, dims=2)
-vec_diff, std_diff = mean_and_std((vec_naive .- all_err)./coef_norm, 2)
-plot(noise_vals, vec_diff, ribbon=std_diff)
-    xlabel!("Noise")
-    ylabel!("Average improvement")
-    title!("Percentage coefficient improvement")
+# vec_naive = mean(all_naive_err, dims=2)
+# vec_diff, std_diff = mean_and_std((vec_naive .- all_err)./coef_norm, 2)
+coef_norm = sum(core_dyn_true.A.^2)
+vec_naive, std_naive = mean_and_std(all_naive_err./coef_norm, 2)
+vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
+# plot(noise_vals, vec_naive, ribbon=std_naive, label="Intial SINDy")
+#     plot!(noise_vals, vec_err, ribbon=std_err, label="Final iteration")
+#     xlabel!("Noise")
+#     ylabel!("L2 error")
+#     title!("Fractional Error in Coefficients")
 
 # Error in derivatives: only look at where there's no control
-# ind = this_model.subsample_ind
-vec_naive_deriv = mean(all_naive_err_deriv, dims=2)
-vec_deriv = mean(all_err_deriv, dims=2)
-vec_diff_deriv, std_diff_deriv = mean_and_std(vec_naive_deriv .- vec_deriv, 2)
-plot(noise_vals, vec_diff_deriv, ribbon=std_diff_deriv)
-    xlabel!("Noise")
-    ylabel!("Average improvement")
-    title!("Error in derivatives")
+# vec_naive_deriv = mean(all_naive_err_deriv, dims=2)
+# # vec_deriv = mean(all_err_deriv_subsample, dims=2)
+# vec_deriv = all_err_deriv_subsample
+# vec_diff_deriv, std_diff_deriv = mean_and_std(vec_naive_deriv .- vec_deriv, 2)
+vec_deriv, std_deriv = mean_and_std(all_err_deriv_subsample, 2)
+vec_naive_deriv, std_naive_deriv = mean_and_std(all_naive_err_deriv, 2)
+# plot(noise_vals, vec_naive_deriv, ribbon=std_naive_deriv, label="Intial SINDy")
+#     plot!(noise_vals, vec_deriv, ribbon=std_deriv, label="Final iteration")
+#     xlabel!("Noise")
+#     ylabel!("L2 Error")
+#     title!("Error in Model Derivatives")
 
 # Model visualizations
-plot_subsampled_points(this_model)
-# plot_subsampled_simulation(this_model, 2)
-plot_subsampled_derivatives(this_model, 1)
-plot_residual(this_model)
+# plot_subsampled_points(this_model)
+# # plot_subsampled_simulation(this_model, 2)
+# plot_subsampled_derivatives(this_model, 1)
+# plot_residual(this_model)
 
 # plot_subsampled_points_and_control(this_model, this_truth)
 
@@ -171,4 +184,7 @@ plot_residual(this_model)
 #####
 this_dat_name = "dat_library_of_examples_lv_noise_"
 
-save_for_plotting(this_model, this_truth, this_dat_name)
+save_for_plotting(noise_vals,
+                vec_naive, std_naive, vec_err, std_err,
+                vec_deriv, std_deriv, vec_naive_deriv, std_naive_deriv,
+                this_dat_name)

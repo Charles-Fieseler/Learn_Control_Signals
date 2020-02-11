@@ -53,13 +53,7 @@ this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 #####
 ##### Loop over additive noise
 #####
-
-# noise_vals = [0, 0.1]
 noise_vals = 0.0:0.05:0.3
-# noise_factor = norm(numerical_grad)
-# noise_factor = 1;
-# noise_vals .*= noise_factor
-# noise_factor = sqrt.(sum(numerical_grad.^2, dims=2))
 num_models = 20
 all_err = zeros(length(noise_vals), num_models)
 all_err_deriv = zeros(length(noise_vals), num_models)
@@ -85,10 +79,6 @@ for (i,σ) in enumerate(noise_vals)
         this_model.parameters = get_sra_defaults(false)
         prams = this_model.parameters
         prams.model_template = model_template
-        # prams.sindyc_ensemble_parameters =
-        #     Dict(:selection_criterion=>sindy_cross_validate);
-        # prams.sindyc_ensemble_parameters[:selection_criterion] =
-        #     sindy_cross_validate;
         prams.sindy_terms_list = Iterators.product(1:3, 1:3)
         prams.initial_subsampling = true
 
@@ -125,59 +115,12 @@ for (i,σ) in enumerate(noise_vals)
     println("=====================================")
 end
 
-# all_err_saved = copy(all_err);
-# boxplot(collect(noise_vals)', all_err')
-
-# all_err = all_err_saved;
-# Remove outliers
-# for i in 1:size(all_err,1)
-#     all_err[i,:] = replace_outliers(all_err[i,:], 0)
-# end
-# coef_norm = sum(core_dyn_true.A.^2)
-# vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
-# # vec_err, std_err = mean_and_std(all_err)
-# plot(noise_vals, vec_err, ribbon=std_err)
-#     xlabel!("Noise")
-#     ylabel!("L2 Error")
-#     title!("Error in coefficients for final model")
-
-# vec_i, std_i = mean_and_std(all_i.-1, 2)
-# plot(noise_vals, vec_i, ribbon=std_i)
-#     xlabel!("Noise")
-#     ylabel!("Number of iterations")
-#     title!("Average number of iterations to convergence")
-
-# vec_naive = mean(all_naive_err, dims=2)
-# vec_diff, std_diff = mean_and_std((vec_naive .- all_err)./coef_norm, 2)
 coef_norm = sum(core_dyn_true.A.^2)
 vec_naive, std_naive = mean_and_std(all_naive_err./coef_norm, 2)
 vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
-# plot(noise_vals, vec_naive, ribbon=std_naive, label="Intial SINDy")
-#     plot!(noise_vals, vec_err, ribbon=std_err, label="Final iteration")
-#     xlabel!("Noise")
-#     ylabel!("L2 error")
-#     title!("Fractional Error in Coefficients")
-
 # Error in derivatives: only look at where there's no control
-# vec_naive_deriv = mean(all_naive_err_deriv, dims=2)
-# # vec_deriv = mean(all_err_deriv_subsample, dims=2)
-# vec_deriv = all_err_deriv_subsample
-# vec_diff_deriv, std_diff_deriv = mean_and_std(vec_naive_deriv .- vec_deriv, 2)
 vec_deriv, std_deriv = mean_and_std(all_err_deriv_subsample, 2)
 vec_naive_deriv, std_naive_deriv = mean_and_std(all_naive_err_deriv, 2)
-# plot(noise_vals, vec_naive_deriv, ribbon=std_naive_deriv, label="Intial SINDy")
-#     plot!(noise_vals, vec_deriv, ribbon=std_deriv, label="Final iteration")
-#     xlabel!("Noise")
-#     ylabel!("L2 Error")
-#     title!("Error in Model Derivatives")
-
-# Model visualizations
-# plot_subsampled_points(this_model)
-# # plot_subsampled_simulation(this_model, 2)
-# plot_subsampled_derivatives(this_model, 1)
-# plot_residual(this_model)
-
-# plot_subsampled_points_and_control(this_model, this_truth)
 
 #####
 ##### Save Lotka-Volterra data

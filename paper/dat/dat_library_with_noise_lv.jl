@@ -5,9 +5,6 @@ pyplot()
 Random.seed!(11)
 using BSON: @save
 include("../scripts/paper_settings.jl");
-# include("../../utils/sindy_turing_utils.jl")
-# include("../../utils/main_algorithm_utils.jl")
-# include("../../utils/sindy_statistics_utils.jl")
 
 ################################################################################
 #####
@@ -54,11 +51,11 @@ end
 #####
 ##### Loop over noise and number of spikes
 #####
-# noise_vals = 0.0:0.05:0.5
-noise_vals = 0.0:0.05:0.1
-num_models = 20
-# control_signal_vals = 0:2:10
-control_signal_vals = [0,5,10]
+noise_vals = 0.0:0.05:0.5
+# noise_vals = 0.0:0.05:0.2
+num_models = 40
+control_signal_vals = 0:3:12
+# control_signal_vals = [0,5]
 
 ## Output values
 this_size = (length(noise_vals), length(control_signal_vals), num_models)
@@ -86,9 +83,9 @@ end
 
 for (i_noise,σ) in enumerate(noise_vals)
     for (i_ctr, num_ctr) in enumerate(control_signal_vals)
+    this_truth, dat, numerical_grad = local_make_data(num_ctr)
         for i_model in 1:num_models
             # Get data
-            this_truth, dat, numerical_grad = local_make_data(num_ctr)
             noisy_grad = numerical_grad .+ σ.*randn(size(dat))
             # Initialize
             global this_model =
@@ -134,6 +131,18 @@ for (i_noise,σ) in enumerate(noise_vals)
 end
 
 coef_norm = sum(core_dyn_true.A.^2)
+
+# heatmap_coef_naive = mean(all_naive_err./coef_norm, dims=3)[:,:,1]
+# heatmap_coef_final = mean(all_err./coef_norm, dims=3)[:,:,1]
+# heatmap(control_signal_vals, noise_vals, heatmap_coef_final)
+#     xlabel!("Controllers")
+#     ylabel!("Noise")
+#     title!("Final Model Error")
+# heatmap(control_signal_vals, noise_vals, heatmap_coef_naive .- heatmap_coef_final)
+#     xlabel!("Controllers")
+#     ylabel!("Noise")
+#     title!("Improvement in error")
+
 # vec_naive, std_naive = mean_and_std(all_naive_err./coef_norm, 2)
 # vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
 # # Error in derivatives: only look at where there's no control

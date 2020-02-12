@@ -109,11 +109,23 @@ function plot_library_noise(this_dat_name, system_name="";
         ## Load
         this_dat_name = DAT_FOLDERNAME*this_dat_name;
 
+        fname = this_dat_name*"metadata.bson"
+        @load fname noise_vals control_signal_vals coef_norm
+
         fname = this_dat_name*"coefficients.bson"
-        @load fname noise_vals vec_naive std_naive vec_err std_err
+        @load fname all_naive_err all_err
 
         fname = this_dat_name*"derivatives.bson";
-        @load fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+        @load fname all_err_deriv_subsample all_naive_err_deriv
+        # fname = this_dat_name*"coefficients.bson"
+        # @load fname noise_vals vec_naive std_naive vec_err std_err
+        #
+        # fname = this_dat_name*"derivatives.bson";
+        # @load fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+        # vec_naive, std_naive = mean_and_std(all_naive_err./coef_norm, 2)
+        # vec_err, std_err = mean_and_std(all_err./coef_norm, 2)
+        # vec_deriv, std_deriv = mean_and_std(all_err_deriv_subsample, 2)
+        # vec_naive_deriv, std_naive_deriv = mean_and_std(all_naive_err_deriv, 2)
 
         ## First panel: Error in coefficients
         coef_plot = plot(noise_vals, vec_naive, ribbon=std_naive,

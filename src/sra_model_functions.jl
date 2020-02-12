@@ -296,17 +296,33 @@ end
 
 
 # Note: just saving matrices in a standard way
-function save_for_plotting(noise_vals,
-                vec_naive, std_naive, vec_err, std_err,
-                vec_deriv, std_deriv, vec_naive_deriv, std_naive_deriv,
+# function save_for_plotting(noise_vals,
+#                 vec_naive, std_naive, vec_err, std_err,
+#                 vec_deriv, std_deriv, vec_naive_deriv, std_naive_deriv,
+#                 this_dat_name="test")
+#     this_dat_name = DAT_FOLDERNAME*this_dat_name;
+#
+#     fname = this_dat_name*"coefficients.bson"
+#     @save fname noise_vals vec_naive std_naive vec_err std_err
+#
+#     fname = this_dat_name*"derivatives.bson";
+#     @save fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+# end
+
+function save_for_plotting(noise_vals, control_signal_vals, coef_norm,
+                all_naive_err, all_err,
+                all_err_deriv_subsample, all_naive_err_deriv,
                 this_dat_name="test")
     this_dat_name = DAT_FOLDERNAME*this_dat_name;
 
+    fname = this_dat_name*"metadata.bson"
+    @save fname noise_vals control_signal_vals coef_norm
+
     fname = this_dat_name*"coefficients.bson"
-    @save fname noise_vals vec_naive std_naive vec_err std_err
+    @save fname all_naive_err all_err
 
     fname = this_dat_name*"derivatives.bson";
-    @save fname vec_deriv std_deriv vec_naive_deriv std_naive_deriv
+    @save fname all_err_deriv_subsample all_naive_err_deriv
 end
 
 

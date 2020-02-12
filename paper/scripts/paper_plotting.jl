@@ -105,6 +105,7 @@ function plot_library_noise(this_dat_name, system_name="";
         plot_opt[:xticks] = true
         plot_opt[:yticks] = true
         plot_opt[:tickfontsize] = 16
+        plot_opt[:colorbar] = true
 
         ## Load
         this_dat_name = DAT_FOLDERNAME*this_dat_name;
@@ -127,33 +128,54 @@ function plot_library_noise(this_dat_name, system_name="";
         # vec_deriv, std_deriv = mean_and_std(all_err_deriv_subsample, 2)
         # vec_naive_deriv, std_naive_deriv = mean_and_std(all_naive_err_deriv, 2)
 
+        ## Process
+        # heatmap_coef_naive = mean(all_naive_err./coef_norm, dims=3)[:,:,1]
+        # heatmap_coef_final = mean(all_err./coef_norm, dims=3)[:,:,1]
+
+        heatmap_deriv_naive = mean(all_naive_err_deriv, dims=3)[:,:,1]
+        heatmap_deriv_final = mean(all_err_deriv_subsample, dims=3)[:,:,1]
+        plot_deriv = heatmap(control_signal_vals, noise_vals,
+                heatmap_deriv_final; yticks=true, plot_opt...)
+            xlabel!("Number of Perturbations", guidefontsize=20)
+            xticks!(control_signal_vals)
+            ylabel!("Noise", guidefontsize=20)
+            title!("Final Error (L2, derivatives)")
+
+        plot_opt[:yticks] = false
+        plot_improve = heatmap(control_signal_vals, noise_vals,
+                heatmap_deriv_naive .- heatmap_deriv_final; plot_opt...)
+            xlabel!("Number of Perturbations", guidefontsize=20)
+            xticks!(control_signal_vals)
+            # ylabel!("Noise")
+            title!("Improvement (L2, derivatives)")
+
         ## First panel: Error in coefficients
-        coef_plot = plot(noise_vals, vec_naive, ribbon=std_naive,
-                        label="Intial SINDy", lw=3; plot_opt...)
-            plot!(noise_vals, vec_err, ribbon=std_err, lw=3,
-                        label="Final iteration")
-            xlabel!("Noise", guidefontsize=24)
-            ylabel!("Error", guidefontsize=20)
-            # title!("Fractional Error in Coefficients")
-            title!(system_name*" (coefficients)")
+        # coef_plot = plot(noise_vals, vec_naive, ribbon=std_naive,
+        #                 label="Intial SINDy", lw=3; plot_opt...)
+        #     plot!(noise_vals, vec_err, ribbon=std_err, lw=3,
+        #                 label="Final iteration")
+        #     xlabel!("Noise", guidefontsize=24)
+        #     ylabel!("Error", guidefontsize=20)
+        #     # title!("Fractional Error in Coefficients")
+        #     title!(system_name*" (coefficients)")
 
         ## Second panel: Error in derivatives
-        deriv_plot = plot(noise_vals, vec_naive_deriv, ribbon=std_naive_deriv,
-                        label="Intial SINDy", lw=3; plot_opt...)
-            plot!(noise_vals, vec_deriv, ribbon=std_deriv, lw=3,
-                        label="Final iteration")
-            xlabel!("Noise", guidefontsize=24)
-            ylabel!("Error", guidefontsize=20)
-            # title!("Error in Model Derivatives")
-            title!(system_name*" (derivatives)")
+        # deriv_plot = plot(noise_vals, vec_naive_deriv, ribbon=std_naive_deriv,
+        #                 label="Intial SINDy", lw=3; plot_opt...)
+        #     plot!(noise_vals, vec_deriv, ribbon=std_deriv, lw=3,
+        #                 label="Final iteration")
+        #     xlabel!("Noise", guidefontsize=24)
+        #     ylabel!("Error", guidefontsize=20)
+        #     # title!("Error in Model Derivatives")
+        #     title!(system_name*" (derivatives)")
 
         ##
         ## Put it all together
         ##
         lay = @layout [a b]
 
-        plot_final = plot(
-            coef_plot, deriv_plot, layout=lay)
+        # plot_final = plot(coef_plot, deriv_plot, layout=lay)
+        plot_final = plot(plot_deriv, plot_improve, layout=lay)
         plot!(size=(2000, 250))
 
         ## Save
@@ -161,3 +183,8 @@ function plot_library_noise(this_dat_name, system_name="";
 
         return plot_final
 end
+
+
+
+##
+export plot_library, plot_library_noise

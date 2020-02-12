@@ -17,7 +17,7 @@ include(EXAMPLE_FOLDERNAME*"example_fitzHughNagumo.jl")
 # Define the multivariate forcing function
 num_ctr = 3;
     U_starts = rand(1, num_ctr) .* tspan[2]/2
-    U_widths = 0;0.6;
+    U_widths = 0.6;#0;
     amplitude = 1.0
 my_U_func_time2(t) = U_func_time(t, u0,
                         U_widths, U_starts,

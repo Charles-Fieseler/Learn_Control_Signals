@@ -106,6 +106,7 @@ function plot_library_noise(this_dat_name, system_name="";
         plot_opt[:yticks] = true
         plot_opt[:tickfontsize] = 16
         plot_opt[:colorbar] = true
+        plot_opt[:color] = :Spectral#:RdYlBu
 
         ## Load
         this_dat_name = DAT_FOLDERNAME*this_dat_name;

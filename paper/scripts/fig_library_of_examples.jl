@@ -40,9 +40,6 @@ fname = this_dat_name*"ctr_vars_turing.bson";
 ##### Plot everything
 #####
 this_fig_name = FIGURE_FOLDERNAME*"fig_library_of_examples_"
-# plot_opt = Dict(:titlefontsize=>28,
-#         :xticks=>false, :yticks=>false, :zticks=>false,
-#         :legend=>false, :fontfamily=>:serif)
 
 ## 1: Attractor view (uncontrolled)
 plot_raw = plot3d(dat_raw[1, :], dat_raw[2, :], dat_raw[3, :],
@@ -75,7 +72,7 @@ plot_residual1 = plot(residual[plot_coordinate,ind],
 plot_ctr_guess = plot(ctr_guess[plot_coordinate,ind],
                 color=COLOR_DICT["control_time"], lw=6;
                 plot_opt...)
-        title!("Learned Control Signal");
+        title!("Learned Controller");
 
 ## 5: "Revealed underlying system"
 controlled_ind = 1:5000;
@@ -98,7 +95,7 @@ plot_final = plot(
         plot_residual1, plot_ctr_guess, plot_ctr_true, plot_reconstruction,
         layout=lay)
 plot!(size=(2000, 250))
-fname = this_fig_name * "lorenz.png";
+fname = this_fig_name * "lorenz.pdf";
 savefig(plot_final, fname)
 
 #####
@@ -110,7 +107,7 @@ plot_final = plot_library(this_dat_name, this_fig_name, "Rossler",
                 plot_ind=1001:2000,
                 plot_coordinate=3)
 
-fname = this_fig_name * "rossler.png";
+fname = this_fig_name * "rossler.pdf";
 savefig(plot_final, fname)
 
 
@@ -123,7 +120,7 @@ plot_final = plot_library(this_dat_name, this_fig_name, "Van der Pol",
                 plot_ind=1001:2000,
                 plot_coordinate=1)
 
-fname = this_fig_name * "vanDerPol.png";
+fname = this_fig_name * "vanDerPol.pdf";
 savefig(plot_final, fname)
 
 
@@ -136,7 +133,7 @@ plot_final = plot_library(this_dat_name, this_fig_name, "FitzHugh Nagumo",
                 plot_ind=1001:2000,
                 plot_coordinate=1)
 
-fname = this_fig_name * "fitzHughNagumo.png";
+fname = this_fig_name * "fitzHughNagumo.pdf";
 savefig(plot_final, fname)
 
 
@@ -149,5 +146,5 @@ plot_final = plot_library(this_dat_name, this_fig_name, "Lotka-Volterra",
                 plot_ind=2001:3000,
                 plot_coordinate=1)
 
-fname = this_fig_name * "lotkaVolterra.png";
+fname = this_fig_name * "lotkaVolterra.pdf";
 savefig(plot_final, fname)

@@ -52,7 +52,7 @@ end
 #####
 # Real values
 control_signal_vals = 0:3:12
-num_models = 40
+num_models = 50
 noise_vals = 0.0:0.05:0.5
 # Shorter, test values
 # control_signal_vals = [0,5]

@@ -25,7 +25,6 @@ function local_make_data(num_ctr)
     # Get data
     sol = solve_lv_system(U_func_time=my_U_func_time2)
     dat = Array(sol)
-    numerical_grad = numerical_derivative(dat, ts)
 
     # Also get truth
     true_grad = core_dyn_true(dat)
@@ -44,18 +43,18 @@ function local_make_data(num_ctr)
     this_truth = sra_truth_object(dat_raw, true_grad, U_true, core_dyn_true)
 
     # End
-    return this_truth, dat, numerical_grad
-    # return dat, numerical_grad
+    return this_truth, dat
 end
 
 #####
 ##### Loop over noise and number of spikes
 #####
 noise_vals = 0.0:0.05:0.5
-# noise_vals = 0.0:0.05:0.2
-num_models = 40
+num_models = 50
 control_signal_vals = 0:3:12
-# control_signal_vals = [0,5]
+# noise_vals = 0.0:0.05:0.2
+# num_models = 10
+# control_signal_vals = [0, 5, 10]
 
 ## Output values
 this_size = (length(noise_vals), length(control_signal_vals), num_models)
@@ -83,10 +82,11 @@ end
 
 for (i_noise,σ) in enumerate(noise_vals)
     for (i_ctr, num_ctr) in enumerate(control_signal_vals)
-    this_truth, dat, numerical_grad = local_make_data(num_ctr)
+    this_truth, dat = local_make_data(num_ctr)
         for i_model in 1:num_models
-            # Get data
-            noisy_grad = numerical_grad .+ σ.*randn(size(dat))
+            # Add noise, THEN take derivatives
+            noisy_dat = dat .+ σ.*randn(size(dat))
+            noisy_grad = numerical_derivative(noisy_dat, ts)
             # Initialize
             global this_model =
                 sra_stateful_object(ts, tspan, dat, u0, noisy_grad)
@@ -99,7 +99,8 @@ for (i_noise,σ) in enumerate(noise_vals)
             all_naive_err[i_noise, i_ctr, i_model] =
                     calc_coefficient_error(this_model, this_truth)
             all_naive_err_deriv[i_noise, i_ctr, i_model] = rss_sindy_derivs(
-                    this_model.sindy_model, dat, numerical_grad) ./ length(dat)
+                    this_model.sindy_model, noisy_dat, this_truth.true_grad) ./
+                    length(dat)
 
             #################################################################
             ### Iterate
@@ -118,7 +119,7 @@ for (i_noise,σ) in enumerate(noise_vals)
             #         this_model.sindy_model, dat, numerical_grad)
             ind = this_model.subsample_ind
             all_err_deriv_subsample[i_noise, i_ctr, i_model] = rss_sindy_derivs(
-                    this_model.sindy_model, dat[:,ind], numerical_grad[:,ind]) ./
+                    this_model.sindy_model, noisy_dat[:,ind], this_truth.true_grad[:,ind]) ./
                     (length(ind)*size(dat,1))
             # all_i[i_noise, i_ctr, i_model] = this_model.i
             # println("Final error in coefficients = $(all_err[i_noise, i_model])")

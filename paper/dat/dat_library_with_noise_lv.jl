@@ -16,7 +16,7 @@ include(EXAMPLE_FOLDERNAME*"example_lotkaVolterra.jl")
 function local_make_data(num_ctr)
     # num_ctr = 7;
     U_starts = rand(1, num_ctr) .* tspan[2]
-    U_widths = 0.4;
+    U_widths = 0.5;
     amplitude = 2.0
     my_U_func_time2(t) = U_func_time(t, u0,
                             U_widths, U_starts,
@@ -51,7 +51,7 @@ end
 #####
 noise_vals = 0.0:0.05:0.5
 num_models = 50
-control_signal_vals = 0:3:12
+control_signal_vals = 0:4:20
 # noise_vals = 0.0:0.05:0.2
 # num_models = 10
 # control_signal_vals = [0, 5, 10]

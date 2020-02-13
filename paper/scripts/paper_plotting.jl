@@ -105,7 +105,7 @@ function plot_library_noise(this_dat_name, system_name="";
         plot_opt[:xticks] = true
         plot_opt[:yticks] = true
         plot_opt[:tickfontsize] = 16
-        plot_opt[:colorbar] = true
+        # plot_opt[:colorbar] = true
         plot_opt[:color] = :Spectral#:RdYlBu
 
         ## Load
@@ -135,20 +135,24 @@ function plot_library_noise(this_dat_name, system_name="";
 
         heatmap_deriv_naive = mean(all_naive_err_deriv, dims=3)[:,:,1]
         heatmap_deriv_final = mean(all_err_deriv_subsample, dims=3)[:,:,1]
+        clims = (0, 2*median(heatmap_deriv_naive))
+        plot_opt[:clims] = clims
+
         plot_deriv = heatmap(control_signal_vals, noise_vals,
-                heatmap_deriv_final; yticks=true, plot_opt...)
-            xlabel!("Number of Perturbations", guidefontsize=20)
+                heatmap_deriv_final; plot_opt...)
+            xlabel!("Percent Data Perturbed", guidefontsize=20)
             xticks!(control_signal_vals)
             ylabel!("Noise", guidefontsize=20)
             title!(system_name*" Final Error")
 
         plot_opt[:yticks] = false
+        plot_opt[:colorbar] = false
         plot_improve = heatmap(control_signal_vals, noise_vals,
                 heatmap_deriv_naive .- heatmap_deriv_final; plot_opt...)
-            xlabel!("Number of Perturbations", guidefontsize=20)
+            xlabel!("Percent Data Perturbed", guidefontsize=20)
             xticks!(control_signal_vals)
             # ylabel!("Noise")
-            title!("Improvement (L2, derivatives)")
+            title!("Improvement over SINDy")
 
         ## First panel: Error in coefficients
         # coef_plot = plot(noise_vals, vec_naive, ribbon=std_naive,

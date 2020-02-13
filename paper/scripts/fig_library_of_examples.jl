@@ -75,7 +75,7 @@ plot_residual1 = plot(residual[plot_coordinate,ind],
 plot_ctr_guess = plot(ctr_guess[plot_coordinate,ind],
                 color=COLOR_DICT["control_time"], lw=6;
                 plot_opt...)
-        title!("Control Signal");
+        title!("Learned Control Signal");
 
 ## 5: "Revealed underlying system"
 controlled_ind = 1:5000;

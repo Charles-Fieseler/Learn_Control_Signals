@@ -139,7 +139,7 @@ function plot_library_noise(this_dat_name, system_name="";
             xlabel!("Number of Perturbations", guidefontsize=20)
             xticks!(control_signal_vals)
             ylabel!("Noise", guidefontsize=20)
-            title!("Final Error (L2, derivatives)")
+            title!(system_name*" Final Error")
 
         plot_opt[:yticks] = false
         plot_improve = heatmap(control_signal_vals, noise_vals,
